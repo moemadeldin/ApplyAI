@@ -53,4 +53,26 @@ describe('CreateResumeAction', function (): void {
 
         Queue::assertPushed(ExtractResumeTextJob::class);
     });
+
+    it('replaces old resume when user already has one', function (): void {
+        $user = User::factory()->create();
+        $oldFile = UploadedFile::fake()->create('old_resume.pdf', 512);
+        $oldPath = $oldFile->storeAs('resumes/'.$user->id, 'old_resume.pdf', 'public');
+
+        Resume::factory()->for($user)->create([
+            'path' => $oldPath,
+            'name' => 'old_resume.pdf',
+        ]);
+
+        Storage::disk('public')->assertExists($oldPath);
+
+        $newFile = UploadedFile::fake()->create('new_resume.pdf', 1024);
+        $action = resolve(CreateResumeAction::class);
+        $resume = $action->handle(['path' => $newFile], $user);
+
+        expect($resume->name)->toBe('new_resume.pdf');
+        expect($resume->path)->not->toBe($oldPath);
+
+        Storage::disk('public')->assertMissing($oldPath);
+    });
 });

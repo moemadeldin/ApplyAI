@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Traits\HasAiPrompt;
 
-final readonly class GenerateMockInterviewQAService
+final class GenerateMockInterviewQAService
 {
     use HasAiPrompt;
 

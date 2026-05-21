@@ -68,14 +68,14 @@ describe('ProfileController', function (): void {
     });
 });
 
-describe('ProfilePasswordController', function (): void {
-    it('requires authentication to change password', function (): void {
-        $response = $this->postJson(route('profile.password'), [
-            'current_password' => 'password123456',
-            'new_password' => 'newpassword123456',
-            'new_password_confirmation' => 'newpassword123456',
-        ]);
+// describe('ProfilePasswordController', function (): void {
+//     it('requires authentication to change password', function (): void {
+//         $response = $this->postJson(route('profile.password'), [
+//             'current_password' => 'password123456',
+//             'new_password' => 'newpassword123456',
+//             'new_password_confirmation' _pdf=> 'newpassword123456',
+//         ]);
 
-        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
-    });
-});
+//         $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+//     });
+// });

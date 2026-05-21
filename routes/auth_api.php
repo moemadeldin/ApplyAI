@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\API\V1\Auth\PasswordResetController;
 use App\Http\Controllers\API\V1\Auth\SessionController;
+use App\Http\Controllers\API\V1\CoverLetterController;
 use App\Http\Controllers\API\V1\CustomApplicationController;
 use App\Http\Controllers\API\V1\CustomJobVacancyController;
 use App\Http\Controllers\API\V1\CustomMockInterviewController;
@@ -37,7 +38,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
             ->name('profile.destroy');
     });
 
-    Route::post('/profile/password', ProfilePasswordController::class)
+    Route::post('/profile/password ', ProfilePasswordController::class)
         ->name('profile.password');
 
     Route::controller(CustomJobVacancyController::class)->group(function (): void {
@@ -71,4 +72,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/resumes', 'store')
             ->name('resumes.store');
     });
+
+    Route::get('custom-vacancies/{customJobVacancy}/cover-letter', CoverLetterController::class)
+        ->name('cover-letter.generate');
 });

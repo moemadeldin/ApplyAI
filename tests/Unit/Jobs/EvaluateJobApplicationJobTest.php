@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Actions\CustomJobVacancy\GenerateCustomMockInterviewAction;
+use App\Jobs\EvaluateJobApplicationJob;
 use App\Models\CustomJobApplication;
 use App\Models\CustomJobVacancy;
-use App\Models\MockInterview;
 use App\Models\Resume;
 use App\Models\User;
+use App\Services\EvaluateResumeWithAIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
@@ -20,10 +20,9 @@ beforeEach(function (): void {
             'choices' => [[
                 'message' => [
                     'content' => json_encode([
-                        'qa' => [
-                            ['question' => 'Q1?', 'answer' => 'A1'],
-                            ['question' => 'Q2?', 'answer' => 'A2'],
-                        ],
+                        'score' => 85,
+                        'feedback' => ['strengths' => ['PHP'], 'weaknesses' => []],
+                        'suggestions' => 'Good',
                     ]),
                 ],
             ]],
@@ -31,7 +30,7 @@ beforeEach(function (): void {
     ]);
 });
 
-test('generates mock interview successfully', function (): void {
+test('evaluates application and updates with score', function (): void {
     $user = User::factory()->has(Resume::factory(['extracted_text' => 'My resume']))->create();
     $vacancy = CustomJobVacancy::factory()->create(['user_id' => $user->id]);
     $application = CustomJobApplication::factory()->create([
@@ -39,13 +38,13 @@ test('generates mock interview successfully', function (): void {
         'custom_job_vacancy_id' => $vacancy->id,
     ]);
 
-    $action = resolve(GenerateCustomMockInterviewAction::class);
-    $mockInterview = $action->handle($application);
+    $job = new EvaluateJobApplicationJob($application);
+    $job->handle(resolve(EvaluateResumeWithAIService::class));
 
-    expect($mockInterview)
-        ->toBeInstanceOf(MockInterview::class)
-        ->and($mockInterview->application_id)->toBe($application->id)
-        ->and($mockInterview->questions)->toHaveCount(2);
+    $application->refresh();
+    expect($application->compatibility_score)->toBe(85)
+        ->and($application->applied_at)->not->toBeNull()
+        ->and($application->reviewed_at)->not->toBeNull();
 });
 
 test('throws when resume has no extracted text', function (): void {
@@ -56,6 +55,14 @@ test('throws when resume has no extracted text', function (): void {
         'custom_job_vacancy_id' => $vacancy->id,
     ]);
 
-    $action = resolve(GenerateCustomMockInterviewAction::class);
-    $action->handle($application);
-})->throws(Exception::class, 'Resume not found or has no extracted text.');
+    $job = new EvaluateJobApplicationJob($application);
+    $job->handle(resolve(EvaluateResumeWithAIService::class));
+})->throws(RuntimeException::class);
+
+test('has retry configuration', function (): void {
+    $application = CustomJobApplication::factory()->create();
+    $job = new EvaluateJobApplicationJob($application);
+
+    expect($job->tries)->toBe(3)
+        ->and($job->backoff)->toBe(30);
+});

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Smalot\PdfParser\Parser;
 use Throwable;
 
-final readonly class ResumeTextExtractor
+final class ResumeTextExtractor
 {
     public function extract(string $path): ?string
     {
@@ -45,14 +45,10 @@ final readonly class ResumeTextExtractor
 
     private function extractWithPdftotext(string $file): ?string
     {
-        try {
-            $cmd = 'pdftotext -layout '.escapeshellarg($file).' -';
-            $output = shell_exec($cmd);
+        $cmd = 'pdftotext -layout '.escapeshellarg($file).' -';
+        $output = shell_exec($cmd);
 
-            return $output ? mb_trim($output) : null;
-        } catch (Throwable) {
-            return null;
-        }
+        return $output ? mb_trim($output) : null;
     }
 
     private function cleanText(string $text): string

@@ -30,16 +30,14 @@ final class CreateUserCommand extends Command
      */
     public function handle(): void
     {
-        /** @var array{username: string, email: string, password: string} $user */
+        /** @var array{email: string, password: string} $user */
         $user = [
-            'username' => $this->ask('Name of the new user'),
             'email' => $this->ask('Email of the new user'),
             'password' => $this->secret('Password of the new user'),
         ];
 
         $validator = Validator::make($user, [
-            'username' => ['required', 'string', 'unique:users,username'],
-            'email' => ['required', 'email:rfc,dns', 'unique:users,email'],
+            'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', Password::defaults()],
         ]);
         if ($validator->fails()) {
@@ -51,7 +49,6 @@ final class CreateUserCommand extends Command
         }
 
         User::query()->create([
-            'username' => $user['username'],
             'email' => $user['email'],
             'password' => bcrypt($user['password']),
         ]);
