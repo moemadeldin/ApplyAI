@@ -1,6 +1,6 @@
 # JobPilot
 
-> AI-powered job application platform built with Laravel 13
+> AI-powered job application platform built with Laravel 12
 
 [![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net/)
 [![Laravel](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com/)
