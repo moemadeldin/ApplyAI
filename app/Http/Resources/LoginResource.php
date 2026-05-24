@@ -8,6 +8,7 @@ use App\Models\Resume;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * @property-read User $resource
@@ -31,9 +32,11 @@ final class LoginResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $hasResume = Resume::query()
-            ->where('user_id', $this->resource->id)
-            ->exists();
+        $hasResume = Cache::remember('user:has_resume:' . $this->resource->id, 300, fn () =>
+            Resume::query()
+                ->where('user_id', $this->resource->id)
+                ->exists()
+        );
 
         return [
             'user' => [

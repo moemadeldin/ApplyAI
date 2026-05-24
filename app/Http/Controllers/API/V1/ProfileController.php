@@ -15,6 +15,7 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 
 final readonly class ProfileController
 {
@@ -29,6 +30,8 @@ final readonly class ProfileController
         $avatar = $request->file('avatar');
 
         $user = $action->handle($user, $avatar);
+
+        Cache::forget('user:profile:' . $user->id);
 
         return $this->success(new ProfileResource($user), 'Avatar uploaded successfully.');
     }

@@ -1,4 +1,3 @@
-
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "laravel/laravel",
@@ -15,6 +14,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/telescope": "^5.15",
         "laravel/tinker": "^2.10.1",
+        "predis/predis": "^3.4",
         "sentry/sentry-laravel": "^4.20",
         "smalot/pdfparser": "^2.12"
     },

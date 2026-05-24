@@ -16,6 +16,7 @@ use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 final readonly class CustomApplicationController
 {
@@ -32,7 +33,13 @@ final readonly class CustomApplicationController
         /** @var array{status?: string} $filters */
         $filters = $request->only(['status']);
 
-        $applications = $this->query->builder($filters, $user)->paginate($perPage);
+        $page = (int) $request->query('page', 1);
+        $gen = Cache::get('applications:gen:' . $user->id, 0);
+        $cacheKey = 'user:applications:list:' . $user->id . ':gen:' . $gen . ':page:' . $page . ':status:' . ($filters['status'] ?? 'all');
+
+        $applications = Cache::remember($cacheKey, 60, fn () =>
+            $this->query->builder($filters, $user)->paginate($perPage)
+        );
 
         return JobApplicationListResource::collection($applications);
     }
@@ -41,11 +48,14 @@ final readonly class CustomApplicationController
         CustomJobApplicationOwnershipRequest $request,
         CustomJobApplication $customApplication
     ): JsonResponse {
-        $customApplication->load(['customJobVacancy', 'mockInterview']);
+        $cacheKey = 'user:application:show:' . $customApplication->id;
 
-        return $this->success(
-            new CustomJobApplicationResource($customApplication),
-            'Application details retrieved successfully'
-        );
+        $data = Cache::remember($cacheKey, 300, function () use ($customApplication): CustomJobApplicationResource {
+            $customApplication->load(['customJobVacancy', 'mockInterview']);
+
+            return new CustomJobApplicationResource($customApplication);
+        });
+
+        return $this->success($data, 'Application details retrieved successfully');
     }
 }

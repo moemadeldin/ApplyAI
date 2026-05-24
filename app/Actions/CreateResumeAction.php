@@ -9,6 +9,7 @@ use App\Models\Resume;
 use App\Models\User;
 use App\Utilities\Constants;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -51,6 +52,10 @@ final readonly class CreateResumeAction
                     'path' => $filePath,
                 ]);
         });
+
+        Cache::increment('ai:generation');
+        Cache::forget('user:has_resume:' . $user->id);
+        Cache::forget('user:profile:' . $user->id);
 
         dispatch_sync(new ExtractResumeTextJob($resume));
 

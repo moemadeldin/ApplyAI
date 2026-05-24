@@ -9,6 +9,7 @@ use App\Http\Resources\InterviewQuestionResource;
 use App\Models\CustomJobApplication;
 use App\Traits\APIResponses;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 final readonly class CustomMockInterviewController
 {
@@ -16,13 +17,15 @@ final readonly class CustomMockInterviewController
 
     public function __invoke(CustomJobApplicationOwnershipRequest $request, CustomJobApplication $customApplication): JsonResponse
     {
-        $customApplication->load('mockInterview');
+        $questions = Cache::remember('user:application:mock_questions:' . $customApplication->id, 86400, function () use ($customApplication) {
+            $customApplication->load('mockInterview');
 
-        $questions = $customApplication->mockInterview
-            ?->questions()
-            ->orderBy('order')
-            ->get()
-        ?? collect();
+            return $customApplication->mockInterview
+                ?->questions()
+                ->orderBy('order')
+                ->get()
+            ?? collect();
+        });
 
         if ($questions->isEmpty()) {
             return $this->success([], 'No mock interview questions available.');

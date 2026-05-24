@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -35,30 +36,34 @@ final readonly class GroqClient
 
     private function send(string $systemPrompt, string $userPrompt, bool $jsonMode): string
     {
+        $generation = Cache::get('ai:generation', 0);
+        $cacheKey = 'ai:' . $generation . ':' . md5($systemPrompt . '|' . $userPrompt . '|' . $this->model);
 
-        $body = [
-            'model' => $this->model,
-            'temperature' => $this->temperature,
-            'messages' => [
-                ['role' => 'system', 'content' => $systemPrompt],
-                ['role' => 'user',   'content' => $userPrompt],
-            ],
-        ];
+        return Cache::remember($cacheKey, 86400 * 30, function () use ($systemPrompt, $userPrompt, $jsonMode): string {
+            $body = [
+                'model' => $this->model,
+                'temperature' => $this->temperature,
+                'messages' => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user',   'content' => $userPrompt],
+                ],
+            ];
 
-        if ($jsonMode) {
-            $body['response_format'] = ['type' => 'json_object'];
-        }
+            if ($jsonMode) {
+                $body['response_format'] = ['type' => 'json_object'];
+            }
 
-        $response = Http::withToken($this->apiKey)
-            ->timeout($this->timeout)
-            ->post($this->apiChat, $body)
-            ->throw();
+            $response = Http::withToken($this->apiKey)
+                ->timeout($this->timeout)
+                ->post($this->apiChat, $body)
+                ->throw();
 
-        /** @var string|null $content */
-        $content = $response->json('choices.0.message.content');
+            /** @var string|null $content */
+            $content = $response->json('choices.0.message.content');
 
-        throw_if($content === null, RuntimeException::class, 'Empty response from AI');
+            throw_if($content === null, RuntimeException::class, 'Empty response from AI');
 
-        return $content;
+            return $content;
+        });
     }
 }

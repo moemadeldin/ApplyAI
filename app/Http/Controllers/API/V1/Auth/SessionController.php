@@ -15,6 +15,7 @@ use App\Traits\APIResponses;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 final readonly class SessionController
 {
@@ -24,7 +25,9 @@ final readonly class SessionController
 
     public function show(#[CurrentUser] User $user): JsonResponse
     {
-        return $this->success(new ProfileResource($user), '');
+        $profile = Cache::remember('user:profile:' . $user->id, 300, fn () => new ProfileResource($user));
+
+        return $this->success($profile, '');
     }
 
     public function store(LoginRequest $request, LoginAction $action): JsonResponse

@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 
 final class EvaluateJobApplicationJob implements ShouldQueue
@@ -54,5 +55,8 @@ final class EvaluateJobApplicationJob implements ShouldQueue
             'applied_at' => now(),
             'reviewed_at' => now(),
         ]);
+
+        Cache::forget('user:application:show:' . $application->id);
+        Cache::increment('applications:gen:' . $application->user_id);
     }
 }
