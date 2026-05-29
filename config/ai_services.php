@@ -15,9 +15,9 @@ return [
 
     'model' => env('AI_MODEL', 'llama-3.3-70b-versatile'),
 
-    'temperature' => env('AI_TEMPERATURE', 0.3),
+    'temperature' => (float) env('AI_TEMPERATURE', 0.3),
 
-    'cover_letter_temperature' => env('AI_COVER_LETTER_TEMPERATURE', 0.7),
+    'cover_letter_temperature' => (float) env('AI_COVER_LETTER_TEMPERATURE', 0.7),
 
-    'timeout' => env('AI_TIMEOUT', 60),
+    'timeout' => (int) env('AI_TIMEOUT', 60),
 ];

@@ -21,6 +21,9 @@ final class ResumeResource extends JsonResource
         'path',
     ];
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

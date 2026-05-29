@@ -21,9 +21,13 @@ final class ResumeTextExtractor
             $fullPath = $tempFile;
         } else {
             $fullPath = Storage::disk('public')->path($path);
-            if (! is_file($fullPath)) {
+            if ($fullPath === false || ! is_file($fullPath)) {
                 return null;
             }
+        }
+
+        if (! is_string($fullPath)) {
+            return null;
         }
 
         $text = $this->extractWithPdfParser($fullPath);
