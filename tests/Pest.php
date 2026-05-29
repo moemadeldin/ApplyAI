@@ -18,7 +18,7 @@ use Tests\TestCase;
 */
 
 pest()->extend(TestCase::class, RefreshDatabase::class)->beforeEach(function (): void {
-    Storage::fake('public');
+    Storage::fake('s3');
 });
 
 /*

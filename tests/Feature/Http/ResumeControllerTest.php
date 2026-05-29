@@ -24,7 +24,7 @@ describe('ResumeController', function (): void {
     });
 
     it('can upload resume', function (): void {
-        Storage::fake('public');
+        Storage::fake('s3');
 
         $user = User::factory()->create();
         Sanctum::actingAs($user, ['*']);

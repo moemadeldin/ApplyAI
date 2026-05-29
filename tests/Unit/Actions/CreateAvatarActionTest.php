@@ -8,7 +8,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
-    Storage::fake('public');
+    Storage::fake('s3');
 });
 
 describe('CreateAvatarAction', function (): void {

@@ -19,14 +19,14 @@ final readonly class CreateAvatarAction
 
         return DB::transaction(function () use ($user, $avatar): User {
             if ($user->profile?->avatar && $user->profile->avatar !== Constants::DEFAULT_PROFILE_PICTURE_PATH) {
-                Storage::disk('public')->delete($user->profile->avatar);
+                Storage::disk('s3')->delete($user->profile->avatar);
             }
 
             $path = $avatar->storeAs(
                 Constants::PROFILE_PICTURE_PATH.'/'.$user->id,
                 Str::slug(pathinfo($avatar->getClientOriginalName(), PATHINFO_FILENAME))
                 .'.'.$avatar->getClientOriginalExtension(),
-                'public'
+                's3'
             );
 
             $user->profile()->updateOrCreate(

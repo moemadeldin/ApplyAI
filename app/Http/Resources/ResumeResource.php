@@ -7,6 +7,7 @@ namespace App\Http\Resources;
 use App\Models\Resume;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property-read Resume $resource
@@ -31,7 +32,7 @@ final class ResumeResource extends JsonResource
             'id' => $this->resource->id,
             'user_id' => $this->resource->user_id,
             'name' => $this->resource->name,
-            'path' => $this->resource->path,
+            'path' => Storage::disk('s3')->url($this->resource->path) ?? $this->resource?->path,
         ];
     }
 }

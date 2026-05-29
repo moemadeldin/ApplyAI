@@ -7,6 +7,7 @@ namespace App\Http\Resources;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property-read User $resource
@@ -37,10 +38,10 @@ final class ProfileResource extends JsonResource
             'user' => [
                 'id' => $this->resource->id,
                 'email' => $this->resource->email,
-                'avatar' => $this->resource->profile?->avatar,
+                'avatar' => Storage::disk('s3')->url($this->resource->profile?->avatar) ?? $this->resource->profile?->avatar,
                 'status' => $this->resource->status->label(),
                 'resume_name' => $this->resource->resume !== null ? $this->resource->resume->name : '',
-                'resume' => $this->resource->resume?->path,
+                'resume' => Storage::disk('s3')->url($this->resource->resume->path) ?? $this->resource->resume->path,
             ],
         ];
     }

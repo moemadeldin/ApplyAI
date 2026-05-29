@@ -37,7 +37,7 @@ final readonly class GroqClient
     private function send(string $systemPrompt, string $userPrompt, bool $jsonMode): string
     {
         $generation = Cache::get('ai:generation', 0);
-        $cacheKey = 'ai:' . $generation . ':' . md5($systemPrompt . '|' . $userPrompt . '|' . $this->model);
+        $cacheKey = 'ai:'.$generation.':'.md5($systemPrompt.'|'.$userPrompt.'|'.$this->model);
 
         return Cache::remember($cacheKey, 86400 * 30, function () use ($systemPrompt, $userPrompt, $jsonMode): string {
             $body = [

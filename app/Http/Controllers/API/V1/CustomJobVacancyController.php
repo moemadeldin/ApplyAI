@@ -28,13 +28,12 @@ final readonly class CustomJobVacancyController
     public function index(#[CurrentUser] User $user, Request $request): AnonymousResourceCollection
     {
         $page = (int) $request->query('page', 1);
-        $gen = Cache::get('vacancies:gen:' . $user->id, 0);
-        $cacheKey = 'user:vacancies:list:' . $user->id . ':gen:' . $gen . ':page:' . $page;
+        $gen = Cache::get('vacancies:gen:'.$user->id, 0);
+        $cacheKey = 'user:vacancies:list:'.$user->id.':gen:'.$gen.':page:'.$page;
 
-        $vacancies = Cache::remember($cacheKey, 60, fn () =>
-            $user->customJobVacancies()
-                ->latest()
-                ->paginate(Constants::NUMBER_OF_PAGINATED_JOB_VACANCIES)
+        $vacancies = Cache::remember($cacheKey, 60, fn () => $user->customJobVacancies()
+            ->latest()
+            ->paginate(Constants::NUMBER_OF_PAGINATED_JOB_VACANCIES)
         );
 
         return CustomJobVacancyResource::collection($vacancies);
@@ -49,8 +48,8 @@ final readonly class CustomJobVacancyController
         $jobText = $request->validated('job_text');
         $result = $action->handle($jobText, $user);
 
-        Cache::increment('vacancies:gen:' . $user->id);
-        Cache::increment('applications:gen:' . $user->id);
+        Cache::increment('vacancies:gen:'.$user->id);
+        Cache::increment('applications:gen:'.$user->id);
 
         return $this->success(new CustomJobVacancyWithResultsResource($result), 'Job Vacancy Created Successfully.', Response::HTTP_CREATED);
     }
@@ -68,8 +67,8 @@ final readonly class CustomJobVacancyController
     ): Response {
         $action->handle($customJobVacancy);
 
-        Cache::increment('vacancies:gen:' . $user->id);
-        Cache::increment('applications:gen:' . $user->id);
+        Cache::increment('vacancies:gen:'.$user->id);
+        Cache::increment('applications:gen:'.$user->id);
 
         return $this->noContent();
     }

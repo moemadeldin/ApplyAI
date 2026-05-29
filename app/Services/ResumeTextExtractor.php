@@ -12,19 +12,41 @@ final class ResumeTextExtractor
 {
     public function extract(string $path): ?string
     {
-        $fullPath = Storage::disk('public')->path($path);
-        if (! is_file($fullPath)) {
-            return null;
+        $disk = config('filesystems.default');
+
+        if ($disk === 's3') {
+            $tempFile = tempnam(sys_get_temp_dir(), 'resume_');
+            $contents = Storage::disk('s3')->get($path);
+            file_put_contents($tempFile, $contents);
+            $fullPath = $tempFile;
+        } else {
+            $fullPath = Storage::disk('public')->path($path);
+            if (! is_file($fullPath)) {
+                return null;
+            }
         }
 
         $text = $this->extractWithPdfParser($fullPath);
         if ($text) {
-            return $this->cleanText($text);
+            $text = $this->cleanText($text);
+            if ($disk === 's3') {
+                unlink($tempFile);
+            }
+
+            return $text;
         }
 
         $text = $this->extractWithPdftotext($fullPath);
         if ($text) {
-            return $this->cleanText($text);
+            $text = $this->cleanText($text);
+            if ($disk === 's3') {
+                unlink($tempFile);
+            }
+
+            return $text;
+        }
+        if ($disk === 's3') {
+            unlink($tempFile);
         }
 
         return null;

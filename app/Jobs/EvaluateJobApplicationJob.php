@@ -56,7 +56,7 @@ final class EvaluateJobApplicationJob implements ShouldQueue
             'reviewed_at' => now(),
         ]);
 
-        Cache::forget('user:application:show:' . $application->id);
-        Cache::increment('applications:gen:' . $application->user_id);
+        Cache::forget('user:application:show:'.$application->id);
+        Cache::increment('applications:gen:'.$application->user_id);
     }
 }

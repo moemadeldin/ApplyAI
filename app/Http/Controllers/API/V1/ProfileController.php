@@ -31,7 +31,7 @@ final readonly class ProfileController
 
         $user = $action->handle($user, $avatar);
 
-        Cache::forget('user:profile:' . $user->id);
+        Cache::forget('user:profile:'.$user->id);
 
         return $this->success(new ProfileResource($user), 'Avatar uploaded successfully.');
     }

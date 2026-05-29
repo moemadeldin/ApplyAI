@@ -30,7 +30,7 @@ final readonly class CreateResumeAction
             if ($user->resume) {
                 /** @var string $path */
                 $path = $user->resume->path;
-                Storage::disk('public')->delete($path);
+                Storage::disk('s3')->delete($path);
             }
 
             $filePath = $isFileString
@@ -39,7 +39,7 @@ final readonly class CreateResumeAction
                     Constants::RESUMES_PATH.'/'.$user->id,
                     Str::slug(pathinfo((string) $file->getClientOriginalName(), PATHINFO_FILENAME))
 .'.'.$file->getClientOriginalExtension(),
-                    'public'
+                    's3'
                 );
 
             return Resume::query()->updateOrCreate([
@@ -54,8 +54,8 @@ final readonly class CreateResumeAction
         });
 
         Cache::increment('ai:generation');
-        Cache::forget('user:has_resume:' . $user->id);
-        Cache::forget('user:profile:' . $user->id);
+        Cache::forget('user:has_resume:'.$user->id);
+        Cache::forget('user:profile:'.$user->id);
 
         dispatch_sync(new ExtractResumeTextJob($resume));
 

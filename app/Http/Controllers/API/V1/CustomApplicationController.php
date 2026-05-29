@@ -34,11 +34,10 @@ final readonly class CustomApplicationController
         $filters = $request->only(['status']);
 
         $page = (int) $request->query('page', 1);
-        $gen = Cache::get('applications:gen:' . $user->id, 0);
-        $cacheKey = 'user:applications:list:' . $user->id . ':gen:' . $gen . ':page:' . $page . ':status:' . ($filters['status'] ?? 'all');
+        $gen = Cache::get('applications:gen:'.$user->id, 0);
+        $cacheKey = 'user:applications:list:'.$user->id.':gen:'.$gen.':page:'.$page.':status:'.($filters['status'] ?? 'all');
 
-        $applications = Cache::remember($cacheKey, 60, fn () =>
-            $this->query->builder($filters, $user)->paginate($perPage)
+        $applications = Cache::remember($cacheKey, 60, fn () => $this->query->builder($filters, $user)->paginate($perPage)
         );
 
         return JobApplicationListResource::collection($applications);
@@ -48,7 +47,7 @@ final readonly class CustomApplicationController
         CustomJobApplicationOwnershipRequest $request,
         CustomJobApplication $customApplication
     ): JsonResponse {
-        $cacheKey = 'user:application:show:' . $customApplication->id;
+        $cacheKey = 'user:application:show:'.$customApplication->id;
 
         $data = Cache::remember($cacheKey, 300, function () use ($customApplication): CustomJobApplicationResource {
             $customApplication->load(['customJobVacancy', 'mockInterview']);

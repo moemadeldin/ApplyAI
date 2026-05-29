@@ -17,7 +17,7 @@ final readonly class CustomMockInterviewController
 
     public function __invoke(CustomJobApplicationOwnershipRequest $request, CustomJobApplication $customApplication): JsonResponse
     {
-        $questions = Cache::remember('user:application:mock_questions:' . $customApplication->id, 86400, function () use ($customApplication) {
+        $questions = Cache::remember('user:application:mock_questions:'.$customApplication->id, 86400, function () use ($customApplication) {
             $customApplication->load('mockInterview');
 
             return $customApplication->mockInterview

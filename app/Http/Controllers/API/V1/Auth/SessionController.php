@@ -25,7 +25,7 @@ final readonly class SessionController
 
     public function show(#[CurrentUser] User $user): JsonResponse
     {
-        $profile = Cache::remember('user:profile:' . $user->id, 300, fn () => new ProfileResource($user));
+        $profile = Cache::remember('user:profile:'.$user->id, 300, fn (): ProfileResource => new ProfileResource($user));
 
         return $this->success($profile, '');
     }

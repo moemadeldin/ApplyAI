@@ -14,6 +14,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/telescope": "^5.15",
         "laravel/tinker": "^2.10.1",
+        "league/flysystem-aws-s3-v3": "^3.34",
         "predis/predis": "^3.4",
         "sentry/sentry-laravel": "^4.20",
         "smalot/pdfparser": "^2.12"
@@ -71,7 +72,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"npm run dev\" --names='server,queue,vite'"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" --names='server,queue,vite'"
         ],
         "test": [
             "@test:type-coverage",
