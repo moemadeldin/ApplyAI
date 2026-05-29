@@ -5,24 +5,14 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\User;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
+#[Description('clears expired verification code')]
+#[Signature('codes:clear')]
 final class ClearExpiredVerificationCodes extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'codes:clear';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'clears expired verification code';
-
     /**
      * Execute the console command.
      */

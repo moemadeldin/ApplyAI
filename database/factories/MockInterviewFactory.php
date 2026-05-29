@@ -8,6 +8,7 @@ use App\Models\CustomJobApplication;
 use App\Models\MockInterview;
 use Database\Factories\Concerns\RefreshOnCreate;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Override;
 
 /**
  * @extends Factory<MockInterview>
@@ -17,6 +18,7 @@ final class MockInterviewFactory extends Factory
     /** @use RefreshOnCreate<MockInterview> */
     use RefreshOnCreate;
 
+    #[Override]
     protected $model = MockInterview::class;
 
     public function definition(): array

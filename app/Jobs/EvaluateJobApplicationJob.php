@@ -11,11 +11,15 @@ use App\Services\EvaluateResumeWithAIService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\Backoff;
+use Illuminate\Queue\Attributes\Tries;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use RuntimeException;
 
+#[Backoff(30)]
+#[Tries(3)]
 final class EvaluateJobApplicationJob implements ShouldQueue
 {
     use Dispatchable;

@@ -8,6 +8,7 @@ use App\Models\Profile;
 use App\Models\User;
 use Database\Factories\Concerns\RefreshOnCreate;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Override;
 
 /**
  * @extends Factory<Profile>
@@ -22,6 +23,7 @@ final class ProfileFactory extends Factory
     /**
      * @var class-string<Profile>
      */
+    #[Override]
     protected $model = Profile::class;
 
     /**

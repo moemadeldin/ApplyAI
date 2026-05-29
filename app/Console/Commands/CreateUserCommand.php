@@ -5,26 +5,16 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\User;
+use Illuminate\Console\Attributes\Description;
+use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
+#[Description('Creates a new user')]
+#[Signature('users:create')]
 final class CreateUserCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'users:create';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Creates a new user';
-
     /**
      * Execute the console command.
      */

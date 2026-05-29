@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Database\Factories\ProfileFactory;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $deleted_at
  * @property-read User $user
  */
+#[Hidden([
+    'updated_at',
+    'deleted_at',
+])]
 final class Profile extends Model
 {
     /** @use HasFactory<ProfileFactory> */
@@ -28,11 +33,6 @@ final class Profile extends Model
 
     use HasUuids;
     use SoftDeletes;
-
-    protected $hidden = [
-        'updated_at',
-        'deleted_at',
-    ];
 
     /**
      * @return BelongsTo<User, $this>

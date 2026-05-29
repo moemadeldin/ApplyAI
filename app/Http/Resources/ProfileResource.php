@@ -26,11 +26,6 @@ final class ProfileResource extends JsonResource
         ],
     ];
 
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
@@ -38,11 +33,22 @@ final class ProfileResource extends JsonResource
             'user' => [
                 'id' => $this->resource->id,
                 'email' => $this->resource->email,
-                'avatar' => Storage::disk('s3')->url($this->resource->profile?->avatar) ?? $this->resource->profile?->avatar,
+                'avatar' => $this->resolveFileUrl($this->resource->profile?->avatar),
                 'status' => $this->resource->status->label(),
                 'resume_name' => $this->resource->resume !== null ? $this->resource->resume->name : '',
-                'resume' => Storage::disk('s3')->url($this->resource->resume->path) ?? $this->resource->resume->path,
+                'resume' => $this->resolveFileUrl($this->resource->resume?->path),
             ],
         ];
+    }
+
+    private function resolveFileUrl(?string $path): ?string
+    {
+        if ($path === null) {
+            return null;
+        }
+
+        return config('filesystems.default') === 's3'
+            ? Storage::disk('s3')->url($path)
+            : Storage::disk('public')->url($path);
     }
 }

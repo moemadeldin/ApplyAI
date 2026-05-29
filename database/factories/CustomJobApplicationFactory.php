@@ -9,6 +9,7 @@ use App\Models\CustomJobVacancy;
 use App\Models\User;
 use Database\Factories\Concerns\RefreshOnCreate;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Override;
 
 /**
  * @extends Factory<CustomJobApplication>
@@ -18,6 +19,7 @@ final class CustomJobApplicationFactory extends Factory
     /** @use RefreshOnCreate<CustomJobApplication> */
     use RefreshOnCreate;
 
+    #[Override]
     protected $model = CustomJobApplication::class;
 
     public function definition(): array

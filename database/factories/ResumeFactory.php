@@ -8,6 +8,7 @@ use App\Models\Resume;
 use App\Models\User;
 use Database\Factories\Concerns\RefreshOnCreate;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Override;
 
 /**
  * @extends Factory<Resume>
@@ -22,6 +23,7 @@ final class ResumeFactory extends Factory
     /**
      * @var class-string<Resume>
      */
+    #[Override]
     protected $model = Resume::class;
 
     /**

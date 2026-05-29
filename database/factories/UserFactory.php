@@ -10,6 +10,7 @@ use Database\Factories\Concerns\RefreshOnCreate;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Override;
 
 /**
  * @extends Factory<User>
@@ -24,6 +25,7 @@ final class UserFactory extends Factory
     /**
      * The current password being used by the factory.
      */
+    #[Override]
     protected $model = User::class;
 
     private static string $password;

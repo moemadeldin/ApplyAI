@@ -21,18 +21,24 @@ final class ResumeResource extends JsonResource
         'path',
     ];
 
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->resource->id,
             'user_id' => $this->resource->user_id,
             'name' => $this->resource->name,
-            'path' => Storage::disk('s3')->url($this->resource->path) ?? $this->resource?->path,
+            'path' => $this->resolveFileUrl($this->resource->path),
         ];
+    }
+
+    private function resolveFileUrl(?string $path): ?string
+    {
+        if ($path === null) {
+            return null;
+        }
+
+        return config('filesystems.default') === 's3'
+            ? Storage::disk('s3')->url($path)
+            : Storage::disk('public')->url($path);
     }
 }

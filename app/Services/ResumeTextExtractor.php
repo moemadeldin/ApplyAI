@@ -45,6 +45,7 @@ final class ResumeTextExtractor
 
             return $text;
         }
+
         if ($disk === 's3') {
             unlink($tempFile);
         }

@@ -8,6 +8,7 @@ use App\Http\Resources\ProfileResource;
 use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 
 it('can login user', function (): void {
@@ -27,7 +28,7 @@ it('can login user', function (): void {
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
-                'avatar' => $user->profile?->avatar,
+                'avatar' => Storage::disk('s3')->url($user->profile?->avatar) ?? $user->profile?->avatar,
             ],
         ],
     ]);
@@ -96,10 +97,10 @@ it('returns user details', function (): void {
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
-                'avatar' => $user->profile->avatar,
+                'avatar' => Storage::disk('s3')->url($user->profile?->avatar) ?? $user->profile?->avatar,
                 'status' => $user->status->label(),
                 'resume_name' => $user->resume?->name,
-                'resume' => $user->resume?->path,
+                'resume' => Storage::disk('s3')->url($user->resume?->path) ?? $user->resume?->path,
             ],
         ],
     ]);

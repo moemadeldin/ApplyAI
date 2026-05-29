@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace Tests\Feature\Http;
 
 use App\Models\User;
+use Laravel\Sanctum\Sanctum;
 
-test('it change password', function (): void {
+test('change password with correct current', function (): void {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)
-        ->postJson('/api/v1/profile/password', [
-            'current_password' => 'password',
-            'new_password' => 'newpassword123',
-            'new_password_confirmation' => 'newpassword123',
-        ]);
+    Sanctum::actingAs($user);
+
+    $response = $this->postJson(route('profile.password'), [
+        'current_password' => 'password',
+        'new_password' => 'newpassword123',
+        'new_password_confirmation' => 'newpassword123',
+    ]);
 
     $response->assertOk();
 });
