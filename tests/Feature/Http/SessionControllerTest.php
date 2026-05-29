@@ -91,16 +91,24 @@ it('returns user details', function (): void {
 
     $response->assertOk();
     $response->assertJsonStructure(['data' => ProfileResource::JSON_STRUCTURE]);
+    $avatar = $user->profile?->avatar !== null
+        ? (config('filesystems.default') === 's3' ? Storage::disk('s3')->url($user->profile->avatar) : Storage::disk('public')->url($user->profile->avatar))
+        : null;
+
+    $resume = $user->resume?->path !== null
+        ? (config('filesystems.default') === 's3' ? Storage::disk('s3')->url($user->resume->path) : Storage::disk('public')->url($user->resume->path))
+        : null;
+
     $response->assertJson([
         'data' => [
             'authenticated' => true,
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
-                'avatar' => Storage::disk('s3')->url($user->profile?->avatar) ?? $user->profile?->avatar,
+                'avatar' => $avatar,
                 'status' => $user->status->label(),
                 'resume_name' => $user->resume?->name,
-                'resume' => Storage::disk('s3')->url($user->resume?->path) ?? $user->resume?->path,
+                'resume' => $resume,
             ],
         ],
     ]);
