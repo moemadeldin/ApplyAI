@@ -30,7 +30,17 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: ghcr.io/moemadeldin/applyai:latest
+
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.yml,docker/nginx/default.conf"
+          target: "/home/ubuntu/applyai"
+          strip_components: 0
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1
@@ -40,6 +50,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/applyai
+
+            mkdir -p storage/app docker/nginx
 
             docker compose down
 
