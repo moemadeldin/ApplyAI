@@ -68,6 +68,9 @@ jobs:
             AWS_BUCKET=${{ secrets.AWS_BUCKET }}
             AWS_USE_PATH_STYLE_ENDPOINT=false
             SENTRY_LARAVEL_DSN=${{ secrets.SENTRY_LARAVEL_DSN }}
+            GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+            GROQ_API_CHAT=${{ secrets.GROQ_API_CHAT }}
+            AI_MODEL=${{ secrets.AI_MODEL }}
             ENVEOF
 
             docker compose up -d
