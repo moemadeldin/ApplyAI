@@ -57,7 +57,7 @@ final readonly class CreateResumeAction
         Cache::forget('user:has_resume:'.$user->id);
         Cache::forget('user:profile:'.$user->id);
 
-        dispatch_sync(new ExtractResumeTextJob($resume));
+        dispatch(new ExtractResumeTextJob($resume));
 
         return $resume;
     }

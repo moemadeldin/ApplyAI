@@ -35,6 +35,7 @@ final readonly class CustomApplicationController
 
         $page = (int) $request->query('page', 1);
         $gen = Cache::get('applications:gen:'.$user->id, 0);
+        $gen = is_int($gen) ? $gen : 0;
         $cacheKey = 'user:applications:list:'.$user->id.':gen:'.$gen.':page:'.$page.':status:'.($filters['status'] ?? 'all');
 
         $applications = Cache::remember($cacheKey, 60, fn () => $this->query->builder($filters, $user)->paginate($perPage)
