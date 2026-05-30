@@ -1,10 +1,12 @@
-# JobPilot
+# JobPilot / ApplyAI
 
-> AI-powered job application platform built with Laravel 12
+> AI-powered job application platform built with Laravel 13
 
-[![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)](https://php.net/)
-[![Laravel](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com/)
+[![CI](https://github.com/moemadeldin/JobPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/moemadeldin/JobPilot/actions/workflows/ci.yml)
+[![PHP](https://img.shields.io/badge/PHP-8.5-blue.svg)](https://php.net/)
+[![Laravel](https://img.shields.io/badge/Laravel-13-red.svg)](https://laravel.com/)
 [![MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED.svg)](https://docker.com/)
 
 ## Features
 
@@ -14,17 +16,26 @@
 - **PDF Text Extraction** - Parse resumes from PDF files
 - **API Token Authentication** - Secure Laravel Sanctum auth
 - **REST API** - Full CRUD operations
+- **Async Queue Jobs** - Background processing via Redis queue
+- **Redis Caching** - In-memory cache for API responses and rate limiting
+- **CI/CD** - Automated testing and deployment via GitHub Actions
+- **Dockerized** - Containerized deployment with Docker Compose
 
 ## Tech Stack
 
-- Laravel 12
-- PHP 8.2+
-- MySQL/PostgreSQL
+- Laravel 13
+- PHP 8.5
+- PostgreSQL 16
+- Redis 7 (queue + cache)
+- Nginx
 - Laravel Sanctum
 - Groq API (Llama 3.3)
 - Pest PHP
+- Docker
 
 ## Installation
+
+### Local Development
 
 ```bash
 # Install
@@ -40,6 +51,21 @@ php artisan migrate
 composer dev
 ```
 
+### Docker
+
+```bash
+# Start all services
+docker compose up -d
+
+# Services: postgres, redis, app (PHP-FPM), queue worker, nginx
+```
+
+## CI/CD
+
+On push to `main`:
+1. **CI** runs PHPStan static analysis + Pest test suite on GitHub Actions
+2. **Deploy** builds the Docker image, pushes to GHCR, and deploys to EC2
+
 ## Environment
 
 ```env
@@ -48,10 +74,14 @@ APP_ENV=local
 
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
-DB_PORT=3306
+DB_PORT=5432
 DB_DATABASE=applyai
 DB_USERNAME=
 DB_PASSWORD=
+
+REDIS_HOST=127.0.0.1
+CACHE_STORE=redis
+QUEUE_CONNECTION=redis
 
 GROQ_API_KEY=your_groq_api_key
 ```
@@ -139,10 +169,10 @@ Get token via login response:
 composer test
 
 # Type checking
-composer run test:types
+composer test:types
 
 # Coverage
-composer run test:unit
+composer test:unit
 ```
 
 ## Commands
@@ -160,18 +190,18 @@ php artisan verification:clear
 ```
 app/
 ├── Actions/              # Action classes
-├── Console/            # Artisan commands
-├── DTOs/               # Data Transfer Objects
-├── Enums/               # Enumerations
+├── Console/              # Artisan commands
+├── DTOs/                 # Data Transfer Objects
+├── Enums/                # Enumerations
 ├── Http/
-│   ├── Controllers/   # API controllers
-│   ├── Requests/     # Form requests
-│   └── Resources/    # API resources
-├── Jobs/               # Queue jobs
-├── Models/             # Eloquent models
-├── Queries/            # Query builders
-├── Services/           # Business services
-└── Traits/            # Shared traits
+│   ├── Controllers/      # API controllers
+│   ├── Requests/         # Form requests
+│   └── Resources/        # API resources
+├── Jobs/                 # Queue jobs (async via Redis)
+├── Models/               # Eloquent models
+├── Queries/              # Query builders
+├── Services/             # Business services
+└── Traits/               # Shared traits
 ```
 
 ## License
