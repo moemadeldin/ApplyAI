@@ -30,6 +30,7 @@ final readonly class CustomJobVacancyController
         $page = (int) $request->query('page', 1);
         $gen = Cache::get('vacancies:gen:'.$user->id, 0);
         $gen = is_int($gen) ? $gen : 0;
+
         $cacheKey = 'user:vacancies:list:'.$user->id.':gen:'.$gen.':page:'.$page;
 
         $vacancies = Cache::remember($cacheKey, 60, fn () => $user->customJobVacancies()

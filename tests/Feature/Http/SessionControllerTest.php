@@ -91,6 +91,7 @@ it('returns user details', function (): void {
 
     $response->assertOk();
     $response->assertJsonStructure(['data' => ProfileResource::JSON_STRUCTURE]);
+
     $avatar = $user->profile?->avatar !== null
         ? (config('filesystems.default') === 's3' ? Storage::disk('s3')->url($user->profile->avatar) : Storage::disk('public')->url($user->profile->avatar))
         : null;

@@ -38,6 +38,7 @@ final readonly class GroqClient
     {
         $generation = Cache::get('ai:generation', 0);
         $generation = is_int($generation) ? $generation : 0;
+
         $cacheKey = 'ai:'.$generation.':'.md5($systemPrompt.'|'.$userPrompt.'|'.$this->model);
 
         return Cache::remember($cacheKey, 86400 * 30, function () use ($systemPrompt, $userPrompt, $jsonMode): string {
