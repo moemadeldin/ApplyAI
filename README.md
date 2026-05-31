@@ -1,8 +1,8 @@
-# JobPilot / ApplyAI
+# ApplyAI
 
 > AI-powered job application platform built with Laravel 13
 
-[![CI](https://github.com/moemadeldin/JobPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/moemadeldin/JobPilot/actions/workflows/ci.yml)
+[![CI](https://github.com/moemadeldin/ApplyAI/actions/workflows/ci.yml/badge.svg)](https://github.com/moemadeldin/ApplyAI/actions/workflows/ci.yml)
 [![PHP](https://img.shields.io/badge/PHP-8.5-blue.svg)](https://php.net/)
 [![Laravel](https://img.shields.io/badge/Laravel-13-red.svg)](https://laravel.com/)
 [![MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
