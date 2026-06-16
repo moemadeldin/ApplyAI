@@ -14,6 +14,8 @@ final readonly class Constants
 
     public const string EMAIL_VERIFICATION_TOKEN_TYPE = 'Verify';
 
+    public const string SOCIAL_LOGIN_TOKEN_TYPE = 'SocialLogin';
+
     public const string REGISTER_TOKEN_NAME = 'Register Access Token';
 
     public const string LOGIN_TOKEN_NAME = 'Login Access Token';
@@ -21,6 +23,8 @@ final readonly class Constants
     public const string PASSWORD_RESET_TOKEN_NAME = 'Password Reset Token';
 
     public const string EMAIL_VERIFICATION_TOKEN_NAME = 'Email Verification Token';
+
+    public const string SOCIAL_LOGIN_TOKEN_NAME = 'Social Login Access Token';
 
     public const int NUMBER_OF_PAGINATED_JOB_VACANCIES = 6;
 
