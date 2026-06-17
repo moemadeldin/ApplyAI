@@ -18,7 +18,12 @@ final class ResetPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'new_password' => ['required', 'confirmed', Password::min(8)],
+            'new_password' => ['required', 'confirmed', Password::defaults()
+            ->mixedCase()
+            ->letters()
+            ->numbers()
+            ->symbols()
+            ->uncompromised()],
         ];
     }
 }
