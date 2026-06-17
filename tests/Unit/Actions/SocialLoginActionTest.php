@@ -16,16 +16,24 @@ describe('SocialLoginAction', function (): void {
         $socialUser->shouldReceive('getAvatar')->andReturn('https://example.com/avatar.jpg');
 
         $action = resolve(SocialLoginAction::class);
-        $user = $action->handle($socialUser, 'google');
+        $token = $action->handle($socialUser, 'google');
 
+        expect($token)->toBeString();
+        expect($token)->not->toBeEmpty();
+
+        $user = User::query()
+            ->where('provider', 'google')
+            ->where('provider_id', 'google_123')
+            ->first();
+
+        expect($user)->not->toBeNull();
         expect($user->email)->toBe('new@example.com');
         expect($user->provider)->toBe('google');
         expect($user->provider_id)->toBe('google_123');
-        expect($user->avatar)->toBe('https://example.com/avatar.jpg');
         expect($user->email_verified_at)->not->toBeNull();
         expect($user->status)->toBe(Status::ACTIVE);
         expect($user->profile)->not->toBeNull();
-        expect($user->access_token)->not->toBeNull();
+        expect($user->profile->avatar)->toBe('https://example.com/avatar.jpg');
     });
 
     it('returns existing user matched by provider and provider_id', function (): void {
@@ -41,11 +49,13 @@ describe('SocialLoginAction', function (): void {
         $socialUser->shouldReceive('getAvatar')->andReturn(null);
 
         $action = resolve(SocialLoginAction::class);
-        $user = $action->handle($socialUser, 'google');
+        $token = $action->handle($socialUser, 'google');
 
-        expect($user->id)->toBe($existing->id);
-        expect($user->email)->toBe('existing@example.com');
-        expect($user->access_token)->not->toBeNull();
+        expect($token)->toBeString();
+        expect($token)->not->toBeEmpty();
+
+        $existing->refresh();
+        expect($existing->email)->toBe('existing@example.com');
     });
 
     it('links provider to existing user matched by email', function (): void {
@@ -56,16 +66,19 @@ describe('SocialLoginAction', function (): void {
         ]);
 
         $socialUser = Mockery::mock(SocialiteUser::class);
-        $socialUser->shouldReceive('getId')->andReturn('linkedin_789');
+        $socialUser->shouldReceive('getId')->andReturn('google_789');
         $socialUser->shouldReceive('getEmail')->andReturn('match@example.com');
         $socialUser->shouldReceive('getAvatar')->andReturn(null);
 
         $action = resolve(SocialLoginAction::class);
-        $user = $action->handle($socialUser, 'linkedin');
+        $token = $action->handle($socialUser, 'google');
 
-        expect($user->id)->toBe($existing->id);
-        expect($user->provider)->toBe('linkedin');
-        expect($user->provider_id)->toBe('linkedin_789');
+        expect($token)->toBeString();
+        expect($token)->not->toBeEmpty();
+
+        $existing->refresh();
+        expect($existing->provider)->toBe('google');
+        expect($existing->provider_id)->toBe('google_789');
     });
 
     it('syncs email_verified_at for unverified existing user', function (): void {
@@ -81,15 +94,18 @@ describe('SocialLoginAction', function (): void {
         $socialUser->shouldReceive('getAvatar')->andReturn(null);
 
         $action = resolve(SocialLoginAction::class);
-        $user = $action->handle($socialUser, 'google');
+        $token = $action->handle($socialUser, 'google');
 
-        expect($user->email_verified_at)->not->toBeNull();
+        expect($token)->toBeString();
+        expect($token)->not->toBeEmpty();
+
+        $existing->refresh();
+        expect($existing->email_verified_at)->not->toBeNull();
     });
 
     it('syncs avatar when existing user has no avatar', function (): void {
         $existing = User::factory()->create([
             'email' => 'noavatar@example.com',
-            'avatar' => null,
         ]);
 
         $socialUser = Mockery::mock(SocialiteUser::class);
@@ -98,9 +114,13 @@ describe('SocialLoginAction', function (): void {
         $socialUser->shouldReceive('getAvatar')->andReturn('https://example.com/new-avatar.jpg');
 
         $action = resolve(SocialLoginAction::class);
-        $user = $action->handle($socialUser, 'google');
+        $token = $action->handle($socialUser, 'google');
 
-        expect($user->avatar)->toBe('https://example.com/new-avatar.jpg');
+        expect($token)->toBeString();
+        expect($token)->not->toBeEmpty();
+
+        $existing->refresh();
+        expect($existing->profile->avatar)->toBe('https://example.com/new-avatar.jpg');
     });
 
     it('does not overwrite existing avatar', function (): void {
@@ -108,8 +128,8 @@ describe('SocialLoginAction', function (): void {
             'email' => 'hasavatar@example.com',
             'provider' => 'google',
             'provider_id' => 'google_has_avatar',
-            'avatar' => 'https://example.com/old-avatar.jpg',
         ]);
+        $existing->profile()->create(['avatar' => 'https://example.com/old-avatar.jpg']);
 
         $socialUser = Mockery::mock(SocialiteUser::class);
         $socialUser->shouldReceive('getId')->andReturn('google_has_avatar');
@@ -117,9 +137,13 @@ describe('SocialLoginAction', function (): void {
         $socialUser->shouldReceive('getAvatar')->andReturn('https://example.com/new-avatar.jpg');
 
         $action = resolve(SocialLoginAction::class);
-        $user = $action->handle($socialUser, 'google');
+        $token = $action->handle($socialUser, 'google');
 
-        expect($user->avatar)->toBe('https://example.com/old-avatar.jpg');
+        expect($token)->toBeString();
+        expect($token)->not->toBeEmpty();
+
+        $existing->refresh();
+        expect($existing->profile->avatar)->toBe('https://example.com/old-avatar.jpg');
     });
 
     it('creates user even when email is null', function (): void {
@@ -129,11 +153,20 @@ describe('SocialLoginAction', function (): void {
         $socialUser->shouldReceive('getAvatar')->andReturn(null);
 
         $action = resolve(SocialLoginAction::class);
-        $user = $action->handle($socialUser, 'google');
+        $token = $action->handle($socialUser, 'google');
 
+        expect($token)->toBeString();
+        expect($token)->not->toBeEmpty();
+
+        $user = User::query()
+            ->where('provider', 'google')
+            ->where('provider_id', 'google_noemail')
+            ->first();
+
+        expect($user)->not->toBeNull();
+        expect($user->email)->toBeNull();
         expect($user->provider)->toBe('google');
         expect($user->provider_id)->toBe('google_noemail');
-        expect($user->email)->toBeNull();
         expect($user->profile)->not->toBeNull();
     });
 

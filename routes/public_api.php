@@ -18,9 +18,11 @@ Route::middleware(['guest', 'throttle:5,1'])->group(function (): void {
     Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])
         ->name('forgot.store');
 
-    Route::get('/auth/{provider}/redirect', [SocialiteController::class, 'redirect'])
-        ->name('auth.provider.redirect');
+    Route::controller(SocialiteController::class)->group(function (): void {
+        Route::get('/auth/{provider}/redirect', 'redirect')
+            ->name('auth.provider.redirect');
+        Route::post('/auth/{provider}/callback', 'callback')
+            ->name('auth.provider.callback');
+    });
 
-    Route::post('/auth/{provider}/callback', [SocialiteController::class, 'callback'])
-        ->name('auth.provider.callback');
 });

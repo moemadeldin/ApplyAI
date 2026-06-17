@@ -6,7 +6,7 @@ namespace App\Http\Controllers\API\V1\Auth;
 
 use App\Actions\Auth\SocialLoginAction;
 use App\Traits\APIResponses;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -14,28 +14,31 @@ final readonly class SocialiteController
 {
     use APIResponses;
 
-    private const array SUPPORTED_PROVIDERS = ['linkedin', 'google'];
+    private const array SUPPORTED_PROVIDERS = ['google'];
 
-    public function redirect(string $provider): RedirectResponse
+    public function redirect(string $provider): JsonResponse
     {
         $this->validateProvider($provider);
 
-        return Socialite::driver($provider)
+        $url = Socialite::driver($provider)
             ->stateless()
-            ->redirect();
+            ->redirect()
+            ->getTargetUrl();
+
+        return $this->success(['url' => $url], '', Response::HTTP_FOUND);
     }
 
-    public function callback(string $provider, SocialLoginAction $action): RedirectResponse
+    public function callback(string $provider, SocialLoginAction $action): JsonResponse
     {
         $this->validateProvider($provider);
 
-        $socialUser = Socialite::driver($provider)->stateless()->user();
+        $socialUser = Socialite::driver($provider)
+            ->stateless()
+            ->user();
 
-        $user = $action->handle($socialUser, $provider);
+        $token = $action->handle($socialUser, $provider);
 
-        return redirect(
-            config('app.frontend_url').'/auth/callback?token='.$user->access_token
-        );
+        return $this->success(['token' => $token], '', Response::HTTP_CREATED);
     }
 
     private function validateProvider(string $provider): void

@@ -31,7 +31,6 @@ use Laravel\Sanctum\PersonalAccessToken;
  * @property Status $status
  * @property string|null $provider
  * @property string|null $provider_id
- * @property string|null $avatar
  * @property string|null $verification_code
  * @property Carbon|null $verification_code_expire_at
  * @property string|null $remember_token
@@ -111,7 +110,6 @@ final class User extends Authenticatable
             'password' => 'hashed',
             'provider' => 'string',
             'provider_id' => 'string',
-            'avatar' => 'string',
             'status' => Status::class,
             'verification_code' => 'string',
             'verification_code_expire_at' => 'datetime',

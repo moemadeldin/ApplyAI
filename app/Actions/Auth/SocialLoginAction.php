@@ -18,15 +18,13 @@ final readonly class SocialLoginAction
         private TokenManager $tokenManager,
     ) {}
 
-    public function handle(SocialiteUser $socialUser, string $provider): User
+    public function handle(SocialiteUser $socialUser, string $provider): string
     {
         $user = DB::transaction(fn (): User => $this->resolveUser($socialUser, $provider));
 
         abort_if($user->status !== Status::ACTIVE, Response::HTTP_FORBIDDEN, 'Authentication error.');
 
-        $this->tokenManager->createAccessToken($user, Constants::SOCIAL_LOGIN_TOKEN_TYPE);
-
-        return $user;
+        return $this->tokenManager->createAccessToken($user, Constants::SOCIAL_LOGIN_TOKEN_TYPE);
     }
 
     private function resolveUser(SocialiteUser $socialUser, string $provider): User
@@ -56,12 +54,11 @@ final readonly class SocialLoginAction
             'email_verified_at' => now(),
             'provider' => $provider,
             'provider_id' => $socialUser->getId(),
-            'avatar' => $socialUser->getAvatar(),
             'status' => Status::ACTIVE,
         ]);
 
         $user->profile()->create([
-            'avatar' => Constants::DEFAULT_PROFILE_PICTURE_PATH,
+            'avatar' => $socialUser->getAvatar() ?? Constants::DEFAULT_PROFILE_PICTURE_PATH,
         ]);
 
         return $user;
@@ -80,12 +77,15 @@ final readonly class SocialLoginAction
             $updates['email_verified_at'] = now();
         }
 
-        if ($user->avatar === null && $socialUser->getAvatar() !== null) {
-            $updates['avatar'] = $socialUser->getAvatar();
-        }
-
         if ($updates !== []) {
             $user->updateQuietly($updates);
+        }
+
+        if ($user->profile?->avatar === null && $socialUser->getAvatar() !== null) {
+            $user->profile()->updateOrCreate(
+                ['user_id' => $user->id],
+                ['avatar' => $socialUser->getAvatar()],
+            );
         }
     }
 }
