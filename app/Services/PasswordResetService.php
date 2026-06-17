@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Events\PasswordVerificationCodeSent;
+use App\Exceptions\AuthException;
 use App\Models\User;
 use App\Utilities\Constants;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Date;
 use SensitiveParameter;
 
@@ -14,25 +16,30 @@ final readonly class PasswordResetService
 {
     public function __construct(private TokenManager $tokenManager, private UserValidator $userValidator) {}
 
-    public function forgot(string $email): User
+    public function forgot(string $email): void
     {
         /** @var User $user */
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::query()->whereEmail($email)->first();
 
-        $this->validateStatusAndUpdateUserWithCodeAndToken($user);
+        if (! $user || ! $user->isActive()) {
+            return;
+        }
 
-        return $user;
+        $this->updateUserWithCodeAndToken($user);
+
     }
 
     public function checkCode(string $email, string $verificationCode): User
     {
         /** @var User $user */
-        $user = User::whereEmail($email)->firstOrFail();
+        $user = User::query()->whereEmail($email)->first();
+        throw_unless($user, AuthException::class, 'Invalid credentials.', Response::HTTP_BAD_REQUEST);
 
-        $this->validateCodeAndUpdateUserWithToken($user, $verificationCode);
+        $this->userValidator->validateVerificationCode($user, $verificationCode);
+
+        $this->createResetToken($user);
 
         return $user;
-
     }
 
     public function reset(User $user, #[SensitiveParameter] string $newPassword): User
@@ -47,10 +54,8 @@ final readonly class PasswordResetService
         return $user;
     }
 
-    private function validateStatusAndUpdateUserWithCodeAndToken(User $user): void
+    private function updateUserWithCodeAndToken(User $user): void
     {
-        $this->userValidator->validateUserIsActive($user);
-
         $user->update([
             'verification_code' => $this->generateRandomVerificationCode(),
             'verification_code_expire_at' => Date::now()->addMinutes(Constants::EXPIRATION_VERIFICATION_CODE_TIME_IN_MINUTES),
@@ -64,10 +69,8 @@ final readonly class PasswordResetService
         event(new PasswordVerificationCodeSent($email, $code));
     }
 
-    private function validateCodeAndUpdateUserWithToken(User $user, string $verificationCode): void
+    private function createResetToken(User $user): void
     {
-        $this->userValidator->validateVerificationCode($user, $verificationCode);
-
         $this->tokenManager->createAccessToken($user, Constants::PASSWORD_RESET_TOKEN_TYPE);
     }
 

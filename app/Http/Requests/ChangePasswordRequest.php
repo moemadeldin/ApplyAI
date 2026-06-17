@@ -18,7 +18,7 @@ final class ChangePasswordRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'new_password' => ['required', 'string', 'confirmed', Password::defaults()],
+            'new_password' => ['required', 'string', 'confirmed', Password::min(8)],
         ];
 
         if ($this->user()?->password !== null) {

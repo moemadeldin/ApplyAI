@@ -6,7 +6,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
 final class DeleteAccountRequest extends FormRequest
 {
@@ -18,7 +17,7 @@ final class DeleteAccountRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'password' => ['required', 'string', Password::defaults()],
+            'password' => ['required', 'string'],
         ];
     }
 }

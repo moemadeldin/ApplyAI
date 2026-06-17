@@ -24,8 +24,10 @@ final readonly class PasswordResetController
         /** @var string $email */
         $email = $request->validated('email');
 
+        $this->passwordResetService->forgot($email);
+
         return $this->success(
-            $this->passwordResetService->forgot($email), 'Verification Code Sent Successfully.'
+            [], 'Verification Code Sent Successfully.'
         );
     }
 

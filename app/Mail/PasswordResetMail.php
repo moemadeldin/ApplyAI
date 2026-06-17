@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Utilities\Constants;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
@@ -41,7 +42,10 @@ final class PasswordResetMail extends Mailable
     {
         return new Content(
             view: 'mail.password-reset',
-            with: (['code' => $this->verificationCode])
+            with: [
+                'code' => $this->verificationCode,
+                'expiresInMinutes' => Constants::EXPIRATION_VERIFICATION_CODE_TIME_IN_MINUTES,
+            ]
         );
     }
 

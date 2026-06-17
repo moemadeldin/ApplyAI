@@ -28,7 +28,7 @@ final class CreateUserCommand extends Command
 
         $validator = Validator::make($user, [
             'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', Password::defaults()],
+            'password' => ['required', Password::min(8)],
         ]);
         if ($validator->fails()) {
             foreach ($validator->errors()->all() as $error) {

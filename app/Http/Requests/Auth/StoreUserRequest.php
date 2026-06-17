@@ -20,7 +20,7 @@ final class StoreUserRequest extends FormRequest
     {
         return [
             'email' => ['required', 'email:rfc,dns', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', 'confirmed', Password::min(8)],
             'cf-turnstile-response' => ['required', new Turnstile],
         ];
     }

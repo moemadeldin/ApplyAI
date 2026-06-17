@@ -15,9 +15,13 @@ Route::middleware(['guest', 'throttle:5,1'])->group(function (): void {
     Route::post('/login', [SessionController::class, 'store'])
         ->name('login.store');
 
-    Route::post('/forgot-password', [PasswordResetController::class, 'forgotPassword'])
-        ->name('forgot.store');
 
+    Route::controller(PasswordResetController::class)->group(function (): void {
+        Route::post('/forgot-password', 'forgotPassword')
+            ->name('forgot.store');
+        Route::post('/verify-code', 'checkCode')
+            ->name('verify.code');
+    });
     Route::controller(SocialiteController::class)->group(function (): void {
         Route::get('/auth/{provider}/redirect', 'redirect')
             ->name('auth.provider.redirect');
@@ -25,4 +29,11 @@ Route::middleware(['guest', 'throttle:5,1'])->group(function (): void {
             ->name('auth.provider.callback');
     });
 
+});
+Route::get('/config', function () {
+    return response()->json([
+        'data' => [
+            'turnstile_site_key' => config('services.turnstile.key')
+        ]
+    ]);
 });

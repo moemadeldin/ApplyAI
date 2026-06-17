@@ -48,6 +48,8 @@ use Laravel\Sanctum\PersonalAccessToken;
     'remember_token',
     'updated_at',
     'deleted_at',
+    'verification_code',
+    'verification_code_expire_at',
 ])]
 final class User extends Authenticatable
 {

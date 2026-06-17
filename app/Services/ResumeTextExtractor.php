@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Smalot\PdfParser\Parser;
 use Throwable;
 
-final class ResumeTextExtractor
+final readonly class ResumeTextExtractor
 {
     public function extract(string $path): ?string
     {

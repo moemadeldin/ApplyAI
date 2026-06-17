@@ -83,6 +83,14 @@ jobs:
             GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
             GROQ_API_CHAT=${{ secrets.GROQ_API_CHAT }}
             AI_MODEL=${{ secrets.AI_MODEL }}
+            MAIL_MAILER=smtp
+            MAIL_HOST=smtp.gmail.com
+            MAIL_PORT=587
+            MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+            MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+            MAIL_FROM_ADDRESS=mohamedemadeldinnn2@gmail.com
+            MAIL_FROM_NAME=ApplyAI
+            FRONTEND_URL=https://applyai.vercel.app
             ENVEOF
 
             docker compose up -d

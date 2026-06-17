@@ -22,7 +22,7 @@ final readonly class TokenManager
             default => throw new InvalidArgumentException('Invalid token type'),
         };
 
-        return $user->access_token = $user->createToken($tokenName)->plainTextToken;
+        return $user->access_token = $user->createToken($tokenName, [$type])->plainTextToken;
     }
 
     public function deleteAccessToken(#[CurrentUser] User $user): void

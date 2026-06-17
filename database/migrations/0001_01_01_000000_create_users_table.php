@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('status')->index()->default(value: Status::ACTIVE->value);
             $table->string('verification_code')->index()->nullable();
             $table->timestamp('verification_code_expire_at')->index()->nullable();
+            $table->string('provider')->nullable();
+            $table->string('provider_id')->nullable();
+            $table->unique(['provider', 'provider_id']);
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();

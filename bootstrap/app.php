@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use App\Exceptions\AuthException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
 use Sentry\Laravel\Integration;
 
@@ -31,4 +33,5 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         Integration::handles($exceptions);
         $exceptions->render(fn (AuthException $e) => response()->json(['message' => $e->getMessage()], $e->getCode()));
+        $exceptions->render(fn (ModelNotFoundException $e) => response()->json(['message' => 'Email not found.'], Response::HTTP_NOT_FOUND));
     })->create();

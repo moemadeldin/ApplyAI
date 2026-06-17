@@ -11,6 +11,7 @@ use App\Http\Controllers\API\V1\CustomMockInterviewController;
 use App\Http\Controllers\API\V1\ProfileController;
 use App\Http\Controllers\API\V1\ProfilePasswordController;
 use App\Http\Controllers\API\V1\ResumeController;
+use App\Utilities\Constants;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function (): void {
@@ -23,11 +24,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     });
 
     Route::controller(PasswordResetController::class)->group(function (): void {
-        Route::post('/verify-code', 'checkCode')
-            ->name('verify.code');
-
         Route::post('/reset-password', 'resetPassword')
-            ->name('reset.password');
+            ->name('reset.password')
+            ->middleware(['auth:sanctum', 'ability:' . Constants::PASSWORD_RESET_TOKEN_TYPE]);
     });
 
     Route::controller(ProfileController::class)->group(function (): void {
