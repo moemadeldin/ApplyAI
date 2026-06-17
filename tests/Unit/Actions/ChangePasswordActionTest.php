@@ -16,8 +16,8 @@ describe('ChangePasswordAction', function (): void {
 
         $action = resolve(ChangePasswordAction::class);
         $dto = new ChangePasswordDTO(
-            currentPassword: 'oldpassword123',
             newPassword: 'newpassword123',
+            currentPassword: 'oldpassword123',
         );
 
         $action->handle($user, $dto);
@@ -33,10 +33,29 @@ describe('ChangePasswordAction', function (): void {
 
         $action = resolve(ChangePasswordAction::class);
         $dto = new ChangePasswordDTO(
-            currentPassword: 'wrongpassword',
             newPassword: 'newpassword123',
+            currentPassword: 'wrongpassword',
         );
 
         $action->handle($user, $dto);
     })->throws(AuthException::class);
+
+    it('sets password for social login user with no password', function (): void {
+        $user = User::factory()->create([
+            'password' => null,
+            'provider' => 'google',
+            'provider_id' => '12345',
+        ]);
+
+        $action = resolve(ChangePasswordAction::class);
+        $dto = new ChangePasswordDTO(
+            newPassword: 'newpassword123',
+        );
+
+        $action->handle($user, $dto);
+
+        $user->refresh();
+        expect(Hash::check('newpassword123', $user->password))->toBeTrue();
+        expect($user->provider)->toBe('google');
+    });
 });

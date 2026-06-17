@@ -38,7 +38,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
             ->name('profile.destroy');
     });
 
-    Route::post('/profile/password', ProfilePasswordController::class)
+    Route::patch('/profile/password', ProfilePasswordController::class)
         ->name('profile.password');
 
     Route::controller(CustomJobVacancyController::class)->group(function (): void {

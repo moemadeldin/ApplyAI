@@ -23,4 +23,14 @@ final class LoginRequest extends FormRequest
             'cf-turnstile-response' => ['required', new Turnstile],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'cf-turnstile-response.required' => 'Please complete the security verification before logging in.',
+        ];
+    }
 }

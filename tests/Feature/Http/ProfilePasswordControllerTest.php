@@ -12,8 +12,25 @@ test('change password with correct current', function (): void {
 
     Sanctum::actingAs($user);
 
-    $response = $this->postJson(route('profile.password'), [
+    $response = $this->patchJson(route('profile.password'), [
         'current_password' => 'password',
+        'new_password' => 'newpassword123',
+        'new_password_confirmation' => 'newpassword123',
+    ]);
+
+    $response->assertOk();
+});
+
+test('social login user can set password without current password', function (): void {
+    $user = User::factory()->create([
+        'password' => null,
+        'provider' => 'google',
+        'provider_id' => '12345',
+    ]);
+
+    Sanctum::actingAs($user);
+
+    $response = $this->patchJson(route('profile.password'), [
         'new_password' => 'newpassword123',
         'new_password_confirmation' => 'newpassword123',
     ]);
