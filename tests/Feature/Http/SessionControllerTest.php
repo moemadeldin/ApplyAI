@@ -10,6 +10,11 @@ use App\Models\User;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use RyanChandler\LaravelCloudflareTurnstile\Facades\Turnstile;
+
+beforeEach(function (): void {
+    Turnstile::fake();
+});
 
 it('can login user', function (): void {
     $user = User::factory()->create([
@@ -20,6 +25,7 @@ it('can login user', function (): void {
     $response = $this->postJson(route('login.store'), [
         'email' => 'johndoe@gmail.com',
         'password' => 'password123456',
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
     $response->assertOk();
     $response->assertJsonStructure(['data' => LoginResource::JSON_STRUCTURE]);
@@ -39,6 +45,7 @@ it('validates login credentials', function (): void {
     $response = $this->postJson(route('login.store'), [
         'email' => 'johndo@gmail.com',
         'password' => 'password12345',
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
     $response->assertStatus(Response::HTTP_BAD_REQUEST);
@@ -47,7 +54,7 @@ it('validates login fields', function (): void {
     $response = $this->postJson(route('login.store'), []);
 
     $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    $response->assertJsonValidationErrors(['email', 'password']);
+    $response->assertJsonValidationErrors(['email', 'password', 'cf-turnstile-response']);
 });
 it('returns error when login fails', function (): void {
     $user = User::factory()->create([
@@ -59,6 +66,7 @@ it('returns error when login fails', function (): void {
         'email' => 'johndoe@gmail.com',
         'password' => 'wrongpassword123',
         'status' => Status::BLOCKED->value,
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
     if (! $user->isActive()) {

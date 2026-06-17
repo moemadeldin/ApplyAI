@@ -6,12 +6,18 @@ use App\Models\User;
 use App\Utilities\Constants;
 use Illuminate\Http\Response;
 use Laravel\Sanctum\Sanctum;
+use RyanChandler\LaravelCloudflareTurnstile\Facades\Turnstile;
+
+beforeEach(function (): void {
+    Turnstile::fake();
+});
 
 it('sends verification code for valid email', function (): void {
     $user = User::factory()->create();
 
     $response = $this->postJson(route('forgot.store'), [
         'email' => $user->email,
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
     $response->assertOk();
@@ -20,6 +26,7 @@ it('sends verification code for valid email', function (): void {
 it('validates email format for forgot password', function (): void {
     $response = $this->postJson(route('forgot.store'), [
         'email' => 'invalid-email',
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
     $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);

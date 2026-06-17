@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 use App\Models\User;
 use Illuminate\Http\Response;
+use RyanChandler\LaravelCloudflareTurnstile\Facades\Turnstile;
+
+beforeEach(function (): void {
+    Turnstile::fake();
+});
 
 it('can register a user', function (): void {
     $response = $this->postJson(route('register.store'), [
         'email' => 'johndoe@gmail.com',
         'password' => 'password123456',
         'password_confirmation' => 'password123456',
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
     $response->assertStatus(Response::HTTP_CREATED);
@@ -26,13 +32,14 @@ it('validates request fields', function (): void {
     $response = $this->postJson(route('register.store'), []);
 
     $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    $response->assertJsonValidationErrors(['email', 'password']);
+    $response->assertJsonValidationErrors(['email', 'password', 'cf-turnstile-response']);
 });
 it('validates email format', function (): void {
     $response = $this->postJson(route('register.store'), [
         'email' => 'johndoe',
         'password' => 'password123456',
         'password_confirmation' => 'password123456',
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
     $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -43,6 +50,7 @@ it('validates email format is actual email', function (): void {
         'email' => 'johndoe@example.com',
         'password' => 'password123456',
         'password_confirmation' => 'password123456',
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
     $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -57,6 +65,7 @@ it('validates email is unique', function (): void {
         'email' => 'johndoe@gmail.com',
         'password' => 'password123456',
         'password_confirmation' => 'password123456',
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
     $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -68,6 +77,7 @@ it('validates password rules', function (): void {
         'email' => 'johndoe@gmail.com',
         'password' => '0123456',
         'password_confirmation' => '0123456',
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
     $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -79,6 +89,7 @@ it('validates password confirmation', function (): void {
         'email' => 'johndoe@gmail.com',
         'password' => 'password123456',
         'password_confirmation' => 'password12345',
+        'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
     $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);

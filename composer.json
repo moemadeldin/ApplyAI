@@ -18,6 +18,7 @@
         "league/flysystem-aws-s3-v3": "^3.34",
         "nunomaduro/essentials": "^1.2",
         "predis/predis": "^3.4",
+        "ryangjchandler/laravel-cloudflare-turnstile": "^3.0",
         "sentry/sentry-laravel": "^4.20",
         "smalot/pdfparser": "^2.12"
     },

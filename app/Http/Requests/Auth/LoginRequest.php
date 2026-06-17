@@ -6,6 +6,7 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use RyanChandler\LaravelCloudflareTurnstile\Rules\Turnstile;
 
 final class LoginRequest extends FormRequest
 {
@@ -19,6 +20,7 @@ final class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'email'],
             'password' => ['required'],
+            'cf-turnstile-response' => ['required', new Turnstile],
         ];
     }
 }

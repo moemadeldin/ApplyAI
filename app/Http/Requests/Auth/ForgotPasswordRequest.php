@@ -6,6 +6,7 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use RyanChandler\LaravelCloudflareTurnstile\Rules\Turnstile;
 
 final class ForgotPasswordRequest extends FormRequest
 {
@@ -18,6 +19,7 @@ final class ForgotPasswordRequest extends FormRequest
     {
         return [
             'email' => ['required', 'email'],
+            'cf-turnstile-response' => ['required', new Turnstile],
         ];
     }
 }
