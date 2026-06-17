@@ -6,16 +6,18 @@ namespace App\Http\Resources;
 
 use App\Models\Resume;
 use App\Models\User;
+use App\Traits\ResolvesFileUrls;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @property-read User $resource
  */
 final class LoginResource extends JsonResource
 {
+    use ResolvesFileUrls;
+
     public const array JSON_STRUCTURE = [
         'user' => [
             'id',
@@ -42,9 +44,7 @@ final class LoginResource extends JsonResource
             'user' => [
                 'id' => $this->resource->id,
                 'email' => $this->resource->email,
-                'avatar' => $this->resource->profile?->avatar !== null
-                    ? Storage::disk('s3')->url($this->resource->profile->avatar)
-                    : null,
+                'avatar' => $this->resolveFileUrl($this->resource->profile?->avatar),
             ],
             'access_token' => $this->resource->access_token,
             'needs_resume' => ! $hasResume,

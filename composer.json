@@ -12,11 +12,13 @@
         "php": "^8.5.0",
         "laravel/framework": "^13.1.1",
         "laravel/sanctum": "^4.0",
+        "laravel/socialite": "^5.27",
         "laravel/telescope": "^5.15",
         "laravel/tinker": "^3.0",
         "league/flysystem-aws-s3-v3": "^3.34",
         "nunomaduro/essentials": "^1.2",
         "predis/predis": "^3.4",
+        "ryangjchandler/laravel-cloudflare-turnstile": "^3.0",
         "sentry/sentry-laravel": "^4.20",
         "smalot/pdfparser": "^2.12"
     },

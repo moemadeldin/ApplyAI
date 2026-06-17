@@ -7,6 +7,7 @@ namespace App\Http\Requests\Auth;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
+use RyanChandler\LaravelCloudflareTurnstile\Rules\Turnstile;
 
 final class StoreUserRequest extends FormRequest
 {
@@ -20,6 +21,17 @@ final class StoreUserRequest extends FormRequest
         return [
             'email' => ['required', 'email:rfc,dns', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'cf-turnstile-response' => ['required', new Turnstile],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'cf-turnstile-response.required' => 'Please complete the security verification before registering.',
         ];
     }
 }

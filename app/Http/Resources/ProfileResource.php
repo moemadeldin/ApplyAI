@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\User;
+use App\Traits\ResolvesFileUrls;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @property-read User $resource
  */
 final class ProfileResource extends JsonResource
 {
+    use ResolvesFileUrls;
+
     public const array JSON_STRUCTURE = [
         'authenticated',
         'user' => [
@@ -21,6 +23,7 @@ final class ProfileResource extends JsonResource
             'email',
             'avatar',
             'status',
+            'has_password',
             'resume_name',
             'resume',
         ],
@@ -38,20 +41,10 @@ final class ProfileResource extends JsonResource
                 'email' => $this->resource->email,
                 'avatar' => $this->resolveFileUrl($this->resource->profile?->avatar),
                 'status' => $this->resource->status->label(),
+                'has_password' => $this->resource->password !== null,
                 'resume_name' => $this->resource->resume !== null ? $this->resource->resume->name : '',
                 'resume' => $this->resolveFileUrl($this->resource->resume?->path),
             ],
         ];
-    }
-
-    private function resolveFileUrl(?string $path): ?string
-    {
-        if ($path === null) {
-            return null;
-        }
-
-        return config('filesystems.default') === 's3'
-            ? Storage::disk('s3')->url($path)
-            : Storage::disk('public')->url($path);
     }
 }

@@ -9,23 +9,21 @@ use SensitiveParameter;
 final readonly class ChangePasswordDTO
 {
     public function __construct(
-        #[SensitiveParameter] public string $currentPassword,
         #[SensitiveParameter] public string $newPassword,
+        #[SensitiveParameter] public ?string $currentPassword = null,
     ) {}
 
     /**
-     * @param  array{current_password: mixed, new_password: mixed}  $data
+     * @param  array{current_password?: mixed, new_password: mixed}  $data
      */
     public static function fromArray(array $data): self
     {
-        /** @var string $currentPassword */
-        $currentPassword = $data['current_password'];
         /** @var string $newPassword */
         $newPassword = $data['new_password'];
 
         return new self(
-            currentPassword: $currentPassword,
             newPassword: $newPassword,
+            currentPassword: isset($data['current_password']) ? (string) $data['current_password'] : null,
         );
     }
 }
