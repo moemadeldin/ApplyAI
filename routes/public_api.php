@@ -27,10 +27,4 @@ Route::middleware(['guest', 'throttle:5,1'])->group(function (): void {
         Route::post('/auth/{provider}/callback', 'callback')
             ->name('auth.provider.callback');
     });
-
 });
-Route::get('/config', fn () => response()->json([
-    'data' => [
-        'turnstile_site_key' => config('services.turnstile.key'),
-    ],
-]));
