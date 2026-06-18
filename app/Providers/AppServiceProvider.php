@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Services\GroqClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 final class AppServiceProvider extends ServiceProvider
 {
@@ -25,6 +26,13 @@ final class AppServiceProvider extends ServiceProvider
     {
         Model::unguard();
         Model::shouldBeStrict();
+
+        Password::defaults(fn () => Password::min(8)
+            ->mixedCase()
+            ->letters()
+            ->numbers()
+            ->symbols()
+            ->uncompromised());
 
         /** @var string $model */
         $model = config('ai_services.model');

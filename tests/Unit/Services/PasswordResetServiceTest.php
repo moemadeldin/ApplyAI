@@ -27,11 +27,12 @@ test('forgot sends verification code and creates token', function (): void {
 
     $user = User::factory()->create(['status' => Status::ACTIVE]);
 
-    $result = $this->service->forgot($user->email);
+    $this->service->forgot($user->email);
 
-    expect($result->id)->toBe($user->id);
-    expect($result->verification_code)->not->toBeNull();
-    expect($result->verification_code_expire_at)->not->toBeNull();
+    $user->refresh();
+
+    expect($user->verification_code)->not->toBeNull();
+    expect($user->verification_code_expire_at)->not->toBeNull();
 
     Event::assertDispatched(PasswordVerificationCodeSent::class);
 

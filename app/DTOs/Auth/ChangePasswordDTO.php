@@ -21,9 +21,12 @@ final readonly class ChangePasswordDTO
         /** @var string $newPassword */
         $newPassword = $data['new_password'];
 
+        /** @var string|null $currentPassword */
+        $currentPassword = $data['current_password'] ?? null;
+
         return new self(
             newPassword: $newPassword,
-            currentPassword: isset($data['current_password']) ? (string) $data['current_password'] : null,
+            currentPassword: is_string($currentPassword) ? $currentPassword : null,
         );
     }
 }

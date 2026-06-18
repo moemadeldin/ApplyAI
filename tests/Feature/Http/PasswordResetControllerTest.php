@@ -40,8 +40,6 @@ it('verifies code with valid code', function (): void {
         'verification_code_expire_at' => now()->addMinutes(Constants::EXPIRATION_VERIFICATION_CODE_TIME_IN_MINUTES),
     ]);
 
-    Sanctum::actingAs($user);
-
     $response = $this->postJson(route('verify.code'), [
         'email' => $user->email,
         'code' => '123456',
@@ -56,8 +54,6 @@ it('fails with invalid code', function (): void {
         'verification_code' => '123456',
         'verification_code_expire_at' => now()->addMinutes(Constants::EXPIRATION_VERIFICATION_CODE_TIME_IN_MINUTES),
     ]);
-
-    Sanctum::actingAs($user);
 
     $response = $this->postJson(route('verify.code'), [
         'email' => $user->email,
@@ -74,23 +70,23 @@ it('resets password successfully', function (): void {
         'verification_code_expire_at' => now()->addMinutes(Constants::EXPIRATION_VERIFICATION_CODE_TIME_IN_MINUTES),
     ]);
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['Reset']);
 
     $response = $this->postJson(route('reset.password'), [
-        'new_password' => 'NewPassword123',
-        'new_password_confirmation' => 'NewPassword123',
+        'new_password' => 'NewPassword123!',
+        'new_password_confirmation' => 'NewPassword123!',
     ]);
 
     $response->assertOk();
 
     $user->refresh();
-    expect(password_verify('NewPassword123', (string) $user->password))->toBeTrue();
+    expect(password_verify('NewPassword123!', (string) $user->password))->toBeTrue();
 });
 
 it('validates new password requirements', function (): void {
     $user = User::factory()->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['Reset']);
 
     $response = $this->postJson(route('reset.password'), [
         'new_password' => 'weak',
@@ -104,11 +100,11 @@ it('validates new password requirements', function (): void {
 it('validates password confirmation matches', function (): void {
     $user = User::factory()->create();
 
-    Sanctum::actingAs($user);
+    Sanctum::actingAs($user, ['Reset']);
 
     $response = $this->postJson(route('reset.password'), [
-        'new_password' => 'Password123',
-        'new_password_confirmation' => 'DifferentPassword123',
+        'new_password' => 'Password123!',
+        'new_password_confirmation' => 'DifferentPassword123!',
     ]);
 
     $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -117,8 +113,8 @@ it('validates password confirmation matches', function (): void {
 
 it('requires authentication to reset password', function (): void {
     $response = $this->postJson(route('reset.password'), [
-        'new_password' => 'Password123',
-        'new_password_confirmation' => 'Password123',
+        'new_password' => 'Password123!',
+        'new_password_confirmation' => 'Password123!',
     ]);
 
     $response->assertStatus(Response::HTTP_UNAUTHORIZED);

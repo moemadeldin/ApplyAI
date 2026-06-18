@@ -9,6 +9,7 @@ use App\Traits\APIResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\AbstractProvider;
 
 final readonly class SocialiteController
 {
@@ -20,7 +21,10 @@ final readonly class SocialiteController
     {
         $this->validateProvider($provider);
 
-        $url = Socialite::driver($provider)
+        /** @var AbstractProvider $driver */
+        $driver = Socialite::driver($provider);
+
+        $url = $driver
             ->stateless()
             ->redirect()
             ->getTargetUrl();
@@ -32,7 +36,10 @@ final readonly class SocialiteController
     {
         $this->validateProvider($provider);
 
-        $socialUser = Socialite::driver($provider)
+        /** @var AbstractProvider $driver */
+        $driver = Socialite::driver($provider);
+
+        $socialUser = $driver
             ->stateless()
             ->user();
 

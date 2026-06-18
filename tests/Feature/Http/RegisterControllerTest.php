@@ -13,8 +13,8 @@ beforeEach(function (): void {
 it('can register a user', function (): void {
     $response = $this->postJson(route('register.store'), [
         'email' => 'johndoe@gmail.com',
-        'password' => 'password123456',
-        'password_confirmation' => 'password123456',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
         'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
@@ -37,8 +37,8 @@ it('validates request fields', function (): void {
 it('validates email format', function (): void {
     $response = $this->postJson(route('register.store'), [
         'email' => 'johndoe',
-        'password' => 'password123456',
-        'password_confirmation' => 'password123456',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
         'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
@@ -48,8 +48,8 @@ it('validates email format', function (): void {
 it('validates email format is actual email', function (): void {
     $response = $this->postJson(route('register.store'), [
         'email' => 'johndoe@example.com',
-        'password' => 'password123456',
-        'password_confirmation' => 'password123456',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
         'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
@@ -63,8 +63,8 @@ it('validates email is unique', function (): void {
 
     $response = $this->postJson(route('register.store'), [
         'email' => 'johndoe@gmail.com',
-        'password' => 'password123456',
-        'password_confirmation' => 'password123456',
+        'password' => 'Password123!',
+        'password_confirmation' => 'Password123!',
         'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
@@ -87,8 +87,8 @@ it('validates password confirmation', function (): void {
 
     $response = $this->postJson(route('register.store'), [
         'email' => 'johndoe@gmail.com',
-        'password' => 'password123456',
-        'password_confirmation' => 'password12345',
+        'password' => 'Password123!',
+        'password_confirmation' => 'DifferentPassword123!',
         'cf-turnstile-response' => Turnstile::dummy(),
     ]);
 
