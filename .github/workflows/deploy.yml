@@ -88,9 +88,11 @@ jobs:
             MAIL_PORT=587
             MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
             MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
-            MAIL_FROM_ADDRESS=mohamedemadeldinnn2@gmail.com
+            MAIL_FROM_ADDRESS=${{ secrets.MAIL_USERNAME }}
             MAIL_FROM_NAME=ApplyAI
             FRONTEND_URL=https://apply-ai-ui.vercel.app/
+            TURNSTILE_SITE_KEY=${{ secrets.TURNSTILE_SITE_KEY }}
+            TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }}
             ENVEOF
 
             docker compose up -d
