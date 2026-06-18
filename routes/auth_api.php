@@ -26,7 +26,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::controller(PasswordResetController::class)->group(function (): void {
         Route::post('/reset-password', 'resetPassword')
             ->name('reset.password')
-            ->middleware(['auth:sanctum', 'ability:' . Constants::PASSWORD_RESET_TOKEN_TYPE]);
+            ->middleware(['auth:sanctum', 'ability:'.Constants::PASSWORD_RESET_TOKEN_TYPE]);
     });
 
     Route::controller(ProfileController::class)->group(function (): void {

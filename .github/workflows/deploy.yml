@@ -90,7 +90,7 @@ jobs:
             MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
             MAIL_FROM_ADDRESS=mohamedemadeldinnn2@gmail.com
             MAIL_FROM_NAME=ApplyAI
-            FRONTEND_URL=https://applyai.vercel.app
+            FRONTEND_URL=https://apply-ai-ui.vercel.app/
             ENVEOF
 
             docker compose up -d

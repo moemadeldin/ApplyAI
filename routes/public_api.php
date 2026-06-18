@@ -15,7 +15,6 @@ Route::middleware(['guest', 'throttle:5,1'])->group(function (): void {
     Route::post('/login', [SessionController::class, 'store'])
         ->name('login.store');
 
-
     Route::controller(PasswordResetController::class)->group(function (): void {
         Route::post('/forgot-password', 'forgotPassword')
             ->name('forgot.store');
@@ -30,10 +29,8 @@ Route::middleware(['guest', 'throttle:5,1'])->group(function (): void {
     });
 
 });
-Route::get('/config', function () {
-    return response()->json([
-        'data' => [
-            'turnstile_site_key' => config('services.turnstile.key')
-        ]
-    ]);
-});
+Route::get('/config', fn () => response()->json([
+    'data' => [
+        'turnstile_site_key' => config('services.turnstile.key'),
+    ],
+]));

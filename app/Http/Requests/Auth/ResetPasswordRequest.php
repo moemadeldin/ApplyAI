@@ -19,11 +19,11 @@ final class ResetPasswordRequest extends FormRequest
     {
         return [
             'new_password' => ['required', 'confirmed', Password::defaults()
-            ->mixedCase()
-            ->letters()
-            ->numbers()
-            ->symbols()
-            ->uncompromised()],
+                ->mixedCase()
+                ->letters()
+                ->numbers()
+                ->symbols()
+                ->uncompromised()],
         ];
     }
 }

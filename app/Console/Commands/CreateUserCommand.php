@@ -29,11 +29,11 @@ final class CreateUserCommand extends Command
         $validator = Validator::make($user, [
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', Password::defaults()
-            ->mixedCase()
-            ->letters()
-            ->numbers()
-            ->symbols()
-            ->uncompromised()],
+                ->mixedCase()
+                ->letters()
+                ->numbers()
+                ->symbols()
+                ->uncompromised()],
         ]);
         if ($validator->fails()) {
             foreach ($validator->errors()->all() as $error) {

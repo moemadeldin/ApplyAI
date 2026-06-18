@@ -11,6 +11,6 @@ final class NotFoundException extends Exception
 {
     public function __construct(string $resource)
     {
-        parent::__construct("{$resource} not found.", Response::HTTP_NOT_FOUND);
+        parent::__construct($resource.' not found.', Response::HTTP_NOT_FOUND);
     }
 }

@@ -19,11 +19,11 @@ final class ChangePasswordRequest extends FormRequest
     {
         $rules = [
             'new_password' => ['required', 'string', 'confirmed', Password::defaults()
-            ->mixedCase()
-            ->letters()
-            ->numbers()
-            ->symbols()
-            ->uncompromised()],
+                ->mixedCase()
+                ->letters()
+                ->numbers()
+                ->symbols()
+                ->uncompromised()],
         ];
 
         if ($this->user()?->password !== null) {
