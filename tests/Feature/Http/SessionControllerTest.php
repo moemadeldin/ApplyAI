@@ -34,7 +34,9 @@ it('can login user', function (): void {
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
-                'avatar' => Storage::disk('s3')->url($user->profile?->avatar) ?? $user->profile?->avatar,
+                'avatar' => config('filesystems.default') === 's3'
+                    ? Storage::disk('s3')->url($user->profile?->avatar)
+                    : Storage::disk('public')->url($user->profile?->avatar),
             ],
         ],
     ]);
