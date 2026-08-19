@@ -12,6 +12,7 @@ use App\Http\Resources\CustomJobVacancyResource;
 use App\Http\Resources\CustomJobVacancyWithResultsResource;
 use App\Models\CustomJobVacancy;
 use App\Models\User;
+use App\Services\FetchJobPageService;
 use App\Traits\APIResponses;
 use App\Utilities\Constants;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -20,10 +21,13 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use RuntimeException;
 
 final readonly class CustomJobVacancyController
 {
     use APIResponses;
+
+    public function __construct(private FetchJobPageService $fetchJobPageService) {}
 
     public function index(#[CurrentUser] User $user, Request $request): AnonymousResourceCollection
     {
@@ -46,9 +50,26 @@ final readonly class CustomJobVacancyController
         CreateCustomJobVacancyAction $action,
         #[CurrentUser] User $user
     ): JsonResponse {
-        /** @var string $jobText */
+        /** @var string|null $jobUrl */
+        $jobUrl = $request->validated('job_url');
+        /** @var string|null $jobText */
         $jobText = $request->validated('job_text');
-        $result = $action->handle($jobText, $user);
+
+        if ($jobUrl !== null) {
+            try {
+                $jobText = $this->fetchJobPageService->fetch($jobUrl);
+            } catch (RuntimeException $e) {
+                return $this->fail($e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        }
+
+        throw_if($jobText === null, RuntimeException::class, 'Job text or URL is required.');
+
+        try {
+            $result = $action->handle($jobText, $user, $jobUrl);
+        } catch (RuntimeException $runtimeException) {
+            return $this->fail($runtimeException->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         Cache::increment('vacancies:gen:'.$user->id);
         Cache::increment('applications:gen:'.$user->id);

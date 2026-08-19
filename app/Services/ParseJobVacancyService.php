@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Traits\HasAiPrompt;
+use RuntimeException;
 
 final readonly class ParseJobVacancyService
 {
@@ -24,7 +25,7 @@ final readonly class ParseJobVacancyService
         /** @var array<mixed, mixed> $data */
         $data = $this->client->requestJson(self::SYSTEM_PROMPT, $prompt);
 
-        return [
+        $result = [
             'title' => $this->stringOrNull($data, 'title'),
             'company' => $this->stringOrNull($data, 'company'),
             'description' => $this->stringOrNull($data, 'description'),
@@ -38,6 +39,14 @@ final readonly class ParseJobVacancyService
             'expected_salary' => $this->normalizeSalary($this->stringOrNull($data, 'expected_salary')),
             'category' => $this->stringOrNull($data, 'category'),
         ];
+
+        throw_if(
+            array_filter($result, fn (int|string|null $value): bool => $value !== null) === [],
+            RuntimeException::class,
+            "Couldn't extract job details from this page."
+        );
+
+        return $result;
     }
 
     private function getPrompt(string $jobText, string $configKey): string

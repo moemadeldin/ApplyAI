@@ -44,6 +44,11 @@ return [
         'api_chat' => env('GROQ_API_CHAT', ''),
     ],
 
+    'jina' => [
+        'api_key' => env('JINA_API_KEY', ''),
+        'reader_url' => env('JINA_READER_URL', 'https://r.jina.ai/'),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

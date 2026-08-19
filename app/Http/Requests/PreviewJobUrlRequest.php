@@ -6,7 +6,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-final class StoreCustomJobVacancyRequest extends FormRequest
+final class PreviewJobUrlRequest extends FormRequest
 {
     /**
      * @return array<string, array<int, string>>
@@ -14,8 +14,7 @@ final class StoreCustomJobVacancyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'job_url' => ['nullable', 'regex:/^https?:\/\/[^\s]+$/i', 'max:2048', 'required_without:job_text'],
-            'job_text' => ['nullable', 'string', 'required_without:job_url'],
+            'job_url' => ['required', 'regex:/^https?:\/\/[^\s]+$/i', 'max:2048'],
         ];
     }
 }

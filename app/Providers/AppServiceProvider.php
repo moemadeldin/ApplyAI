@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Services\FetchJobPageService;
 use App\Services\GroqClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
@@ -34,8 +35,8 @@ final class AppServiceProvider extends ServiceProvider
             ->symbols()
             ->uncompromised());
 
-        /** @var string $model */
-        $model = config('ai_services.model');
+        /** @var array<int, string> $models */
+        $models = config('ai_services.models', []);
         /** @var float $temperature */
         $temperature = config('ai_services.temperature');
         /** @var string $apiKey */
@@ -46,10 +47,21 @@ final class AppServiceProvider extends ServiceProvider
         $timeout = config('ai_services.timeout');
 
         $this->app->singleton(GroqClient::class, fn (): GroqClient => new GroqClient(
-            model: $model,
+            models: $models,
             temperature: $temperature,
             apiKey: $apiKey,
             apiChat: $apiChat,
+            timeout: $timeout,
+        ));
+
+        /** @var string $jinaApiKey */
+        $jinaApiKey = config('services.jina.api_key');
+        /** @var string $jinaReaderUrl */
+        $jinaReaderUrl = config('services.jina.reader_url');
+
+        $this->app->singleton(FetchJobPageService::class, fn (): FetchJobPageService => new FetchJobPageService(
+            apiKey: $jinaApiKey,
+            readerUrl: $jinaReaderUrl,
             timeout: $timeout,
         ));
     }

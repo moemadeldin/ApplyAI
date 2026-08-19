@@ -83,6 +83,7 @@ jobs:
             GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
             GROQ_API_CHAT=${{ secrets.GROQ_API_CHAT }}
             AI_MODEL=${{ secrets.AI_MODEL }}
+            AI_MODELS=${{ secrets.AI_MODELS }}
             MAIL_MAILER=smtp
             MAIL_HOST=smtp.gmail.com
             MAIL_PORT=587

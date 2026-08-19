@@ -84,6 +84,8 @@ CACHE_STORE=redis
 QUEUE_CONNECTION=redis
 
 GROQ_API_KEY=your_groq_api_key
+AI_MODEL=llama-3.3-70b-versatile
+AI_MODELS=llama-3.3-70b-versatile,openai/gpt-oss-120b,openai/gpt-oss-20b,meta-llama/llama-4-scout-17b-16e-instruct,llama-3.1-8b-instant
 ```
 
 ## API Endpoints

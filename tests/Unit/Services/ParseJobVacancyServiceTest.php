@@ -7,6 +7,7 @@ namespace Tests\Unit\Services;
 use App\Services\ParseJobVacancyService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 test('parse returns parsed data', function (): void {
     Http::fake([
@@ -137,3 +138,15 @@ test('returns null for non-numeric salary', function (): void {
 
     expect($result['expected_salary'])->toBeNull();
 });
+
+test('throws when the AI returns no job details at all', function (): void {
+    Http::fake(['*' => Http::response([
+        'choices' => [[
+            'message' => ['content' => json_encode([])],
+        ]],
+    ], Response::HTTP_OK)]);
+
+    $service = resolve(ParseJobVacancyService::class);
+
+    $service->parse('Job');
+})->throws(RuntimeException::class, "Couldn't extract job details from this page.");

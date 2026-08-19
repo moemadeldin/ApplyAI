@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('title')->nullable();
             $table->longText('description')->nullable();
             $table->longText('job_text')->nullable();
+            $table->string('job_url')->nullable();
             $table->text('responsibilities')->nullable();
             $table->text('requirements')->nullable();
             $table->text('skills_required')->nullable();

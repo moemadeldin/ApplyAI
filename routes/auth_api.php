@@ -8,6 +8,7 @@ use App\Http\Controllers\API\V1\CoverLetterController;
 use App\Http\Controllers\API\V1\CustomApplicationController;
 use App\Http\Controllers\API\V1\CustomJobVacancyController;
 use App\Http\Controllers\API\V1\CustomMockInterviewController;
+use App\Http\Controllers\API\V1\JobUrlPreviewController;
 use App\Http\Controllers\API\V1\ProfileController;
 use App\Http\Controllers\API\V1\ProfilePasswordController;
 use App\Http\Controllers\API\V1\ResumeController;
@@ -46,6 +47,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
         Route::post('custom-vacancies', 'store')
             ->name('custom-vacancies.store');
+
+        Route::post('custom-vacancies/preview', JobUrlPreviewController::class)
+            ->name('custom-vacancies.preview');
 
         Route::get('custom-vacancies/{customJobVacancy}', 'show')
             ->name('custom-vacancies.show');

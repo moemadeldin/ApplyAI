@@ -33,12 +33,12 @@ final readonly class CreateCustomJobVacancyAction
     /**
      * @return array{vacancy: CustomJobVacancy, application: CustomJobApplication, mock_interview: ?MockInterview}
      */
-    public function handle(string $jobText, User $user): array
+    public function handle(string $jobText, User $user, ?string $jobUrl = null): array
     {
-        return DB::transaction(function () use ($jobText, $user): array {
+        return DB::transaction(function () use ($jobText, $user, $jobUrl): array {
 
             $parsed = $this->parseService->parse($jobText);
-            $vacancy = $this->createVacancy($user, $parsed);
+            $vacancy = $this->createVacancy($user, $parsed, $jobText, $jobUrl);
 
             $user->loadMissing('resume');
 
@@ -88,7 +88,7 @@ final readonly class CreateCustomJobVacancyAction
     /**
      * @param  array<string, int|string|null>  $parsed
      */
-    private function createVacancy(User $user, array $parsed): CustomJobVacancy
+    private function createVacancy(User $user, array $parsed, ?string $jobText = null, ?string $jobUrl = null): CustomJobVacancy
     {
         return CustomJobVacancy::query()->create([
             'title' => $parsed['title'],
@@ -103,6 +103,8 @@ final readonly class CreateCustomJobVacancyAction
             'experience_years_max' => $parsed['experience_years_max'],
             'expected_salary' => $parsed['expected_salary'],
             'category' => $parsed['category'],
+            'job_text' => $jobText,
+            'job_url' => $jobUrl,
             'user_id' => $user->id,
         ]);
     }
