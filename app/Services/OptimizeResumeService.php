@@ -12,7 +12,7 @@ final readonly class OptimizeResumeService
 
     private const string SYSTEM_PROMPT = 'You are an expert resume strategist and ATS optimization specialist.';
 
-    public function __construct(private GroqClient $client) {}
+    public function __construct(private GeminiClient $client) {}
 
     public function optimize(string $resumeText, string $jobDescription): string
     {

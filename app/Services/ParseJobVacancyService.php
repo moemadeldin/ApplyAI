@@ -13,7 +13,7 @@ final readonly class ParseJobVacancyService
 
     private const string SYSTEM_PROMPT = 'You are a job vacancy parser.';
 
-    public function __construct(private GroqClient $client) {}
+    public function __construct(private GeminiClient $client) {}
 
     /**
      * @return array<string, int|string|null>

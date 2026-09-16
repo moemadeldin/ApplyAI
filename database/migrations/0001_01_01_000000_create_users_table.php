@@ -28,14 +28,14 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
             $table->string('email_unique')
-                ->virtualAs('IF(deleted_at IS NULL, email, NULL)')
+                ->storedAs('CASE WHEN deleted_at IS NULL THEN email ELSE NULL END')
                 ->nullable();
             $table->unique('email_unique');
             $table->string('provider_unique')
-                ->virtualAs('IF(deleted_at IS NULL, provider, NULL)')
+                ->storedAs('CASE WHEN deleted_at IS NULL THEN provider ELSE NULL END')
                 ->nullable();
             $table->string('provider_id_unique')
-                ->virtualAs('IF(deleted_at IS NULL, provider_id, NULL)')
+                ->storedAs('CASE WHEN deleted_at IS NULL THEN provider_id ELSE NULL END')
                 ->nullable();
             $table->unique(['provider_unique', 'provider_id_unique']);
         });

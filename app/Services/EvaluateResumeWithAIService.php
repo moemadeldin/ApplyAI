@@ -12,7 +12,7 @@ final readonly class EvaluateResumeWithAIService
 
     private const string SYSTEM_PROMPT = 'You are a structured evaluator. Always return only valid JSON.';
 
-    public function __construct(private GroqClient $client) {}
+    public function __construct(private GeminiClient $client) {}
 
     /**
      * @return array{score: int, feedback: array{strengths: list<string>, weaknesses: list<string>}, suggestions: string}

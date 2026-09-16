@@ -13,7 +13,7 @@ final readonly class GenerateMockInterviewQAService
     private const string SYSTEM_PROMPT =
         'You are a structured interviewer. Always return only valid JSON.';
 
-    public function __construct(private GroqClient $client) {}
+    public function __construct(private GeminiClient $client) {}
 
     /**
      * @return list<array{question: string, answer: string}>

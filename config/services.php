@@ -39,10 +39,6 @@ return [
     // 'openai' => [
     //     'key' => env('OPENAI_API_KEY'),
     // ],
-    'groq' => [
-        'api_key' => env('GROQ_API_KEY', ''),
-        'api_chat' => env('GROQ_API_CHAT', ''),
-    ],
 
     'jina' => [
         'api_key' => env('JINA_API_KEY', ''),

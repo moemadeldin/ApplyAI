@@ -17,8 +17,10 @@ use App\Services\OptimizeResumeService;
 use App\Services\ParseJobVacancyService;
 use App\Utilities\Constants;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Concurrency;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 final readonly class CreateCustomJobVacancyAction
 {
@@ -37,9 +39,6 @@ final readonly class CreateCustomJobVacancyAction
     {
         return DB::transaction(function () use ($jobText, $user, $jobUrl): array {
 
-            $parsed = $this->parseService->parse($jobText);
-            $vacancy = $this->createVacancy($user, $parsed, $jobText, $jobUrl);
-
             $user->loadMissing('resume');
 
             abort_if(
@@ -50,15 +49,32 @@ final readonly class CreateCustomJobVacancyAction
 
             $resumeText = $user->resume->extracted_text;
 
-            $evaluation = $this->evaluateService->evaluate($resumeText, $jobText);
+            [$parsed, $evaluation] = Concurrency::run([
+                fn (): array => $this->parseService->parse($jobText),
+                fn (): array => $this->evaluateService->evaluate($resumeText, $jobText),
+            ], timeout: $this->taskTimeout());
+
+            $parsed = $this->normalizeParsed($parsed);
+            $evaluation = $this->normalizeEvaluation($evaluation);
+
+            [$optimizedResume, $qaList] = Concurrency::run([
+                fn (): string => $this->optimizeService->optimize($resumeText, $jobText),
+                fn (): array => $this->generateService->generate($resumeText, $jobText),
+            ], timeout: $this->taskTimeout());
+
+            $optimizedResume = $this->normalizeResume($optimizedResume);
+            $qaList = $this->normalizeQaList($qaList);
+
+            $vacancy = $this->createVacancy($user, $parsed, $jobText, $jobUrl);
+
             $score = (int) ($evaluation['score'] ?? 0);
 
             if ($score >= Constants::MINIMUM_SCORE) {
-                $optimizedResume = $this->optimizeService->optimize($resumeText, $jobText);
                 $coverLetter = $this->coverLetterService->generate($optimizedResume, $jobText);
             } else {
                 $optimizedResume = null;
                 $coverLetter = null;
+                $qaList = [];
             }
 
             $application = $this->createApplication(
@@ -72,9 +88,8 @@ final readonly class CreateCustomJobVacancyAction
 
             $mockInterview = $this->createMockInterview(
                 $score,
-                $resumeText,
-                $jobText,
-                $application
+                $application,
+                $qaList
             );
 
             return [
@@ -83,6 +98,90 @@ final readonly class CreateCustomJobVacancyAction
                 'mock_interview' => $mockInterview,
             ];
         });
+    }
+
+    private function taskTimeout(): int
+    {
+        /** @var int $timeout */
+        $timeout = config('concurrency.task_timeout', 360);
+
+        return $timeout;
+    }
+
+    /**
+     * @return array<string, int|string|null>
+     */
+    private function normalizeParsed(mixed $value): array
+    {
+        throw_unless(is_array($value), RuntimeException::class, 'AI parsing produced an unexpected result.');
+
+        $result = [];
+
+        foreach ($value as $key => $item) {
+            if (is_string($key) && ($item === null || is_int($item) || is_string($item))) {
+                $result[$key] = $item;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array{score: int, feedback: array{strengths: list<string>, weaknesses: list<string>}, suggestions: string}
+     */
+    private function normalizeEvaluation(mixed $value): array
+    {
+        throw_unless(is_array($value), RuntimeException::class, 'AI evaluation produced an unexpected result.');
+
+        $feedback = is_array($value['feedback'] ?? null) ? $value['feedback'] : [];
+
+        $strengths = is_array($feedback['strengths'] ?? null)
+            ? array_values(array_filter($feedback['strengths'], is_string(...)))
+            : [];
+
+        $weaknesses = is_array($feedback['weaknesses'] ?? null)
+            ? array_values(array_filter($feedback['weaknesses'], is_string(...)))
+            : [];
+
+        $suggestions = is_string($value['suggestions'] ?? null) ? $value['suggestions'] : '';
+        $score = is_int($value['score'] ?? null) ? $value['score'] : 0;
+
+        return [
+            'score' => $score,
+            'feedback' => [
+                'strengths' => $strengths,
+                'weaknesses' => $weaknesses,
+            ],
+            'suggestions' => $suggestions,
+        ];
+    }
+
+    private function normalizeResume(mixed $value): string
+    {
+        return is_string($value) ? $value : '';
+    }
+
+    /**
+     * @return list<array{question: string, answer: string}>
+     */
+    private function normalizeQaList(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        foreach ($value as $item) {
+            if (is_array($item) && is_string($item['question'] ?? null) && is_string($item['answer'] ?? null)) {
+                $result[] = [
+                    'question' => $item['question'],
+                    'answer' => $item['answer'],
+                ];
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -131,11 +230,13 @@ final readonly class CreateCustomJobVacancyAction
         ]);
     }
 
+    /**
+     * @param  list<array{question: string, answer: string}>  $qaList
+     */
     private function createMockInterview(
         int $score,
-        string $resumeText,
-        string $jobText,
-        CustomJobApplication $application
+        CustomJobApplication $application,
+        array $qaList
     ): ?MockInterview {
         if ($score < Constants::MINIMUM_SCORE) {
             MockInterview::query()->create([
@@ -150,8 +251,6 @@ final readonly class CreateCustomJobVacancyAction
             'application_id' => $application->id,
             'status' => MockInterviewStatus::QUALIFIED->value,
         ]);
-
-        $qaList = $this->generateService->generate($resumeText, $jobText);
 
         $questionsData = collect($qaList)->map(fn ($qa, $index): array => [
             'id' => (string) Str::uuid(),

@@ -13,13 +13,13 @@ return [
     | selection and response creativity level (temperature).
     */
 
-    'model' => env('AI_MODEL', 'llama-3.3-70b-versatile'),
+    'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
 
     'models' => array_values(array_filter(array_map(
         trim(...),
         explode(',', (string) env(
-            'AI_MODELS',
-            'llama-3.3-70b-versatile,openai/gpt-oss-120b,openai/gpt-oss-20b,meta-llama/llama-4-scout-17b-16e-instruct,llama-3.1-8b-instant'
+            'GEMINI_MODELS',
+            // 'gemini-3.6-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash,gemini-2.5-flash-lite'
         )),
     ), fn (string $model): bool => $model !== '')),
 

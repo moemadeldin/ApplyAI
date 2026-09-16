@@ -12,7 +12,7 @@ final readonly class GenerateCoverLetterService
 
     private const string SYSTEM_PROMPT = 'You are a professional cover letter writer.';
 
-    public function __construct(private GroqClient $client) {}
+    public function __construct(private GeminiClient $client) {}
 
     public function generate(string $resumeText, string $jobDescription): string
     {
