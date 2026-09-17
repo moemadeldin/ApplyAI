@@ -77,9 +77,11 @@ final readonly class CustomJobVacancyController
         return $this->success(new CustomJobVacancyWithResultsResource($result), 'Job Vacancy Created Successfully.', Response::HTTP_CREATED);
     }
 
-    public function show(CustomJobVacancy $customJobVacancy): JsonResponse
+    public function show(CustomJobVacancy $customJobVacancy, #[CurrentUser] User $user): JsonResponse
     {
-        return $this->success($customJobVacancy, '');
+        abort_if($customJobVacancy->user_id !== $user->id, Response::HTTP_NOT_FOUND);
+
+        return $this->success(new CustomJobVacancyResource($customJobVacancy), '');
     }
 
     public function destroy(
@@ -88,6 +90,8 @@ final readonly class CustomJobVacancyController
         CustomJobVacancy $customJobVacancy,
         #[CurrentUser] User $user
     ): Response {
+        abort_if($customJobVacancy->user_id !== $user->id, Response::HTTP_NOT_FOUND);
+
         $action->handle($customJobVacancy);
 
         Cache::increment('vacancies:gen:'.$user->id);
