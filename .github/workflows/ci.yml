@@ -10,6 +10,37 @@ jobs:
   quality:
     runs-on: ubuntu-latest
 
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
+      GEMINI_MODELS: ${{ secrets.GEMINI_MODELS }}
+      GEMINI_REQUEST_TIMEOUT: ${{ secrets.GEMINI_REQUEST_TIMEOUT }}
+      OPENROUTER_ENABLED: ${{ secrets.OPENROUTER_ENABLED }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      OPENROUTER_BASE_URL: ${{ secrets.OPENROUTER_BASE_URL }}
+      OPENROUTER_MODELS: ${{ secrets.OPENROUTER_MODELS }}
+      OPENROUTER_REQUEST_TIMEOUT: ${{ secrets.OPENROUTER_REQUEST_TIMEOUT }}
+      DEEPSEEK_ENABLED: ${{ secrets.DEEPSEEK_ENABLED }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      DEEPSEEK_BASE_URL: ${{ secrets.DEEPSEEK_BASE_URL }}
+      DEEPSEEK_MODELS: ${{ secrets.DEEPSEEK_MODELS }}
+      DEEPSEEK_REQUEST_TIMEOUT: ${{ secrets.DEEPSEEK_REQUEST_TIMEOUT }}
+      JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
+      JINA_READER_URL: ${{ secrets.JINA_READER_URL }}
+      TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_BUCKET: ${{ secrets.AWS_BUCKET }}
+      SENTRY_LARAVEL_DSN: ${{ secrets.SENTRY_LARAVEL_DSN }}
+      APP_KEY: ${{ secrets.APP_KEY }}
+
     services:
       postgres:
         image: postgres:16-alpine
