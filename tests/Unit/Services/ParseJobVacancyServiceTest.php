@@ -5,33 +5,34 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Services\ParseJobVacancyService;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Http;
+use Gemini\Laravel\Facades\Gemini;
+use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use RuntimeException;
 
-test('parse returns parsed data', function (): void {
-    Http::fake([
-        '*' => Http::response([
-            'choices' => [[
-                'message' => [
-                    'content' => json_encode([
-                        'title' => 'PHP Developer',
-                        'company' => 'Tech Corp',
-                        'description' => 'We need a developer',
-                        'location' => 'Remote',
-                        'employment_type' => 'Full-time',
-                        'responsibilities' => 'Code',
-                        'requirements' => 'PHP',
-                        'skills_required' => 'Laravel',
-                        'experience_years_min' => 2,
-                        'experience_years_max' => 5,
-                        'expected_salary' => '50000',
-                        'category' => 'Tech',
-                    ]),
-                ],
-            ]],
-        ], Response::HTTP_OK),
+function parseJobGeminiJson(array $data): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => json_encode($data, JSON_THROW_ON_ERROR)]]],
+        ]],
     ]);
+}
+
+test('parse returns parsed data', function (): void {
+    Gemini::fake([parseJobGeminiJson([
+        'title' => 'PHP Developer',
+        'company' => 'Tech Corp',
+        'description' => 'We need a developer',
+        'location' => 'Remote',
+        'employment_type' => 'Full-time',
+        'responsibilities' => 'Code',
+        'requirements' => 'PHP',
+        'skills_required' => 'Laravel',
+        'experience_years_min' => 2,
+        'experience_years_max' => 5,
+        'expected_salary' => '50000',
+        'category' => 'Tech',
+    ])]);
 
     $service = resolve(ParseJobVacancyService::class);
     $result = $service->parse('Job description text');
@@ -40,18 +41,14 @@ test('parse returns parsed data', function (): void {
 });
 
 test('stringOrNull returns null for empty string', function (): void {
-    Http::fake(['*' => Http::response([
-        'choices' => [[
-            'message' => ['content' => json_encode([
-                'title' => '', 'company' => 'Tech Corp', 'description' => 'desc',
-                'location' => 'Remote', 'employment_type' => 'Full-time',
-                'responsibilities' => 'Code', 'requirements' => 'PHP',
-                'skills_required' => 'Laravel', 'experience_years_min' => 2,
-                'experience_years_max' => 5, 'expected_salary' => '50000',
-                'category' => 'Tech',
-            ])],
-        ]],
-    ], Response::HTTP_OK)]);
+    Gemini::fake([parseJobGeminiJson([
+        'title' => '', 'company' => 'Tech Corp', 'description' => 'desc',
+        'location' => 'Remote', 'employment_type' => 'Full-time',
+        'responsibilities' => 'Code', 'requirements' => 'PHP',
+        'skills_required' => 'Laravel', 'experience_years_min' => 2,
+        'experience_years_max' => 5, 'expected_salary' => '50000',
+        'category' => 'Tech',
+    ])]);
 
     $service = resolve(ParseJobVacancyService::class);
     $result = $service->parse('Job description');
@@ -60,18 +57,14 @@ test('stringOrNull returns null for empty string', function (): void {
 });
 
 test('normalizes part-time employment type', function (): void {
-    Http::fake(['*' => Http::response([
-        'choices' => [[
-            'message' => ['content' => json_encode([
-                'title' => 'Dev', 'company' => 'C', 'description' => 'd',
-                'location' => 'R', 'employment_type' => 'Part-time',
-                'responsibilities' => 'C', 'requirements' => 'P',
-                'skills_required' => 'L', 'experience_years_min' => 2,
-                'experience_years_max' => 5, 'expected_salary' => '30000',
-                'category' => 'T',
-            ])],
-        ]],
-    ], Response::HTTP_OK)]);
+    Gemini::fake([parseJobGeminiJson([
+        'title' => 'Dev', 'company' => 'C', 'description' => 'd',
+        'location' => 'R', 'employment_type' => 'Part-time',
+        'responsibilities' => 'C', 'requirements' => 'P',
+        'skills_required' => 'L', 'experience_years_min' => 2,
+        'experience_years_max' => 5, 'expected_salary' => '30000',
+        'category' => 'T',
+    ])]);
 
     $service = resolve(ParseJobVacancyService::class);
     $result = $service->parse('Job');
@@ -80,18 +73,14 @@ test('normalizes part-time employment type', function (): void {
 });
 
 test('normalizes full-time employment type variants', function (): void {
-    Http::fake(['*' => Http::response([
-        'choices' => [[
-            'message' => ['content' => json_encode([
-                'title' => 'Dev', 'company' => 'C', 'description' => 'd',
-                'location' => 'R', 'employment_type' => 'Full-time',
-                'responsibilities' => 'C', 'requirements' => 'P',
-                'skills_required' => 'L', 'experience_years_min' => 2,
-                'experience_years_max' => 5, 'expected_salary' => '50000',
-                'category' => 'T',
-            ])],
-        ]],
-    ], Response::HTTP_OK)]);
+    Gemini::fake([parseJobGeminiJson([
+        'title' => 'Dev', 'company' => 'C', 'description' => 'd',
+        'location' => 'R', 'employment_type' => 'Full-time',
+        'responsibilities' => 'C', 'requirements' => 'P',
+        'skills_required' => 'L', 'experience_years_min' => 2,
+        'experience_years_max' => 5, 'expected_salary' => '50000',
+        'category' => 'T',
+    ])]);
 
     $service = resolve(ParseJobVacancyService::class);
     $result = $service->parse('Job');
@@ -100,18 +89,14 @@ test('normalizes full-time employment type variants', function (): void {
 });
 
 test('normalizes salary by removing dollar signs and commas', function (): void {
-    Http::fake(['*' => Http::response([
-        'choices' => [[
-            'message' => ['content' => json_encode([
-                'title' => 'Dev', 'company' => 'C', 'description' => 'd',
-                'location' => 'R', 'employment_type' => 'Full-time',
-                'responsibilities' => 'C', 'requirements' => 'P',
-                'skills_required' => 'L', 'experience_years_min' => 2,
-                'experience_years_max' => 5, 'expected_salary' => '$75,000',
-                'category' => 'T',
-            ])],
-        ]],
-    ], Response::HTTP_OK)]);
+    Gemini::fake([parseJobGeminiJson([
+        'title' => 'Dev', 'company' => 'C', 'description' => 'd',
+        'location' => 'R', 'employment_type' => 'Full-time',
+        'responsibilities' => 'C', 'requirements' => 'P',
+        'skills_required' => 'L', 'experience_years_min' => 2,
+        'experience_years_max' => 5, 'expected_salary' => '$75,000',
+        'category' => 'T',
+    ])]);
 
     $service = resolve(ParseJobVacancyService::class);
     $result = $service->parse('Job');
@@ -120,18 +105,14 @@ test('normalizes salary by removing dollar signs and commas', function (): void 
 });
 
 test('returns null for non-numeric salary', function (): void {
-    Http::fake(['*' => Http::response([
-        'choices' => [[
-            'message' => ['content' => json_encode([
-                'title' => 'Dev', 'company' => 'C', 'description' => 'd',
-                'location' => 'R', 'employment_type' => 'Full-time',
-                'responsibilities' => 'C', 'requirements' => 'P',
-                'skills_required' => 'L', 'experience_years_min' => 2,
-                'experience_years_max' => 5, 'expected_salary' => 'negotiable',
-                'category' => 'T',
-            ])],
-        ]],
-    ], Response::HTTP_OK)]);
+    Gemini::fake([parseJobGeminiJson([
+        'title' => 'Dev', 'company' => 'C', 'description' => 'd',
+        'location' => 'R', 'employment_type' => 'Full-time',
+        'responsibilities' => 'C', 'requirements' => 'P',
+        'skills_required' => 'L', 'experience_years_min' => 2,
+        'experience_years_max' => 5, 'expected_salary' => 'negotiable',
+        'category' => 'T',
+    ])]);
 
     $service = resolve(ParseJobVacancyService::class);
     $result = $service->parse('Job');
@@ -140,11 +121,7 @@ test('returns null for non-numeric salary', function (): void {
 });
 
 test('throws when the AI returns no job details at all', function (): void {
-    Http::fake(['*' => Http::response([
-        'choices' => [[
-            'message' => ['content' => json_encode([])],
-        ]],
-    ], Response::HTTP_OK)]);
+    Gemini::fake([parseJobGeminiJson([])]);
 
     $service = resolve(ParseJobVacancyService::class);
 

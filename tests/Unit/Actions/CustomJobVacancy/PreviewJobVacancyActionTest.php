@@ -5,9 +5,20 @@ declare(strict_types=1);
 namespace Tests\Unit\Actions\CustomJobVacancy;
 
 use App\Actions\CustomJobVacancy\PreviewJobVacancyAction;
+use Gemini\Laravel\Facades\Gemini;
+use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+
+function previewJobGeminiJson(array $data): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => json_encode($data, JSON_THROW_ON_ERROR)]]],
+        ]],
+    ]);
+}
 
 test('previews a job from a URL without persisting anything', function (): void {
     Http::fake([
@@ -15,27 +26,22 @@ test('previews a job from a URL without persisting anything', function (): void 
             '# Laravel Developer at Tech Corp'.PHP_EOL.'We need a Laravel developer with 3+ years experience.',
             Response::HTTP_OK
         ),
-        '*' => Http::response([
-            'choices' => [[
-                'message' => [
-                    'content' => json_encode([
-                        'title' => 'Laravel Developer',
-                        'company' => 'Tech Corp',
-                        'description' => 'We need a developer',
-                        'location' => 'Remote',
-                        'employment_type' => 'Full-time',
-                        'responsibilities' => 'Build APIs',
-                        'requirements' => '3+ years experience',
-                        'skills_required' => 'Laravel, PHP',
-                        'experience_years_min' => 3,
-                        'experience_years_max' => 5,
-                        'expected_salary' => '80000',
-                        'category' => 'Tech',
-                    ]),
-                ],
-            ]],
-        ], Response::HTTP_OK),
     ]);
+
+    Gemini::fake([previewJobGeminiJson([
+        'title' => 'Laravel Developer',
+        'company' => 'Tech Corp',
+        'description' => 'We need a developer',
+        'location' => 'Remote',
+        'employment_type' => 'Full-time',
+        'responsibilities' => 'Build APIs',
+        'requirements' => '3+ years experience',
+        'skills_required' => 'Laravel, PHP',
+        'experience_years_min' => 3,
+        'experience_years_max' => 5,
+        'expected_salary' => '80000',
+        'category' => 'Tech',
+    ])]);
 
     $action = resolve(PreviewJobVacancyAction::class);
     $result = $action->handle('https://example.com/jobs/123');
@@ -73,12 +79,9 @@ test('preview action throws when the page contains no parseable job details', fu
             '# Not a job page'.PHP_EOL.'This page has some content but no job details.',
             Response::HTTP_OK
         ),
-        '*' => Http::response([
-            'choices' => [[
-                'message' => ['content' => json_encode([])],
-            ]],
-        ], Response::HTTP_OK),
     ]);
+
+    Gemini::fake([previewJobGeminiJson([])]);
 
     $action = resolve(PreviewJobVacancyAction::class);
     $action->handle('https://example.com/jobs/123');

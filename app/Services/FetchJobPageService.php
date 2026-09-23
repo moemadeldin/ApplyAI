@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Utilities\Constants;
 use Html2Text\Html2Text;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -11,10 +12,6 @@ use Throwable;
 
 final readonly class FetchJobPageService
 {
-    private const string USER_AGENT = 'ApplyAI/1.0 (job page fetcher)';
-
-    private const int MAX_FETCH_ATTEMPTS = 2;
-
     public function __construct(
         private string $apiKey,
         private string $readerUrl,
@@ -31,7 +28,7 @@ final readonly class FetchJobPageService
             try {
                 return $this->attemptFetch($url);
             } catch (RuntimeException $e) {
-                throw_if($attempt >= self::MAX_FETCH_ATTEMPTS, $e);
+                throw_if($attempt >= Constants::MAX_FETCH_ATTEMPTS, $e);
 
                 $attempt++;
             }
@@ -81,7 +78,7 @@ final readonly class FetchJobPageService
         }
 
         throw_if(
-            mb_strlen($content) < 50,
+            mb_strlen($content) < Constants::MIN_READABLE_CONTENT_LENGTH,
             RuntimeException::class,
             'The job page returned no readable content.'
         );
@@ -108,7 +105,7 @@ final readonly class FetchJobPageService
     private function fetchDirectly(string $url): string
     {
         try {
-            $response = Http::withHeaders(['User-Agent' => self::USER_AGENT])
+            $response = Http::withHeaders(['User-Agent' => Constants::FETCH_JOB_USER_AGENT])
                 ->timeout($this->timeout)
                 ->get($url);
 
@@ -143,7 +140,7 @@ final readonly class FetchJobPageService
 
     private function assertSafeUrl(string $url): void
     {
-        throw_if(mb_strlen($url) > 2048, RuntimeException::class, 'Job URL is too long.');
+        throw_if(mb_strlen($url) > Constants::MAX_JOB_URL_LENGTH, RuntimeException::class, 'Job URL is too long.');
 
         $parts = parse_url($url);
 

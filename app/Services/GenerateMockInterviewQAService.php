@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Traits\HasAiPrompt;
+use App\Utilities\Constants;
 
 final readonly class GenerateMockInterviewQAService
 {
     use HasAiPrompt;
-
-    private const string SYSTEM_PROMPT =
-        'You are a structured interviewer. Always return only valid JSON.';
 
     public function __construct(private GeminiClient $client) {}
 
@@ -27,7 +25,7 @@ final readonly class GenerateMockInterviewQAService
         );
 
         /** @var array<mixed, mixed> $response */
-        $response = $this->client->requestJson(self::SYSTEM_PROMPT, $prompt);
+        $response = $this->client->requestJson(Constants::SYSTEM_PROMPT_MOCK_INTERVIEW, $prompt);
 
         /** @var list<mixed> $qaList */
         $qaList = $response['qa'] ?? [];

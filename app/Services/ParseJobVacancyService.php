@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Traits\HasAiPrompt;
+use App\Utilities\Constants;
 use RuntimeException;
 
 final readonly class ParseJobVacancyService
 {
     use HasAiPrompt;
-
-    private const string SYSTEM_PROMPT = 'You are a job vacancy parser.';
 
     public function __construct(private GeminiClient $client) {}
 
@@ -23,7 +22,7 @@ final readonly class ParseJobVacancyService
         $prompt = $this->getPrompt($jobText, 'prompts.parse_job_vacancy');
 
         /** @var array<mixed, mixed> $data */
-        $data = $this->client->requestJson(self::SYSTEM_PROMPT, $prompt);
+        $data = $this->client->requestJson(Constants::SYSTEM_PROMPT_PARSE_JOB_VACANCY, $prompt);
 
         $result = [
             'title' => $this->stringOrNull($data, 'title'),

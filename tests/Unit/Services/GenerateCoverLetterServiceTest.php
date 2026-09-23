@@ -5,21 +5,22 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Services\GenerateCoverLetterService;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Http;
+use Gemini\Laravel\Facades\Gemini;
+use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use ReflectionMethod;
+
+function coverLetterGeminiText(string $text): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => $text]]],
+        ]],
+    ]);
+}
 
 describe('GenerateCoverLetterService', function (): void {
     it('generates cover letter and sanitizes text', function (): void {
-        Http::fake([
-            '*' => Http::response([
-                'choices' => [[
-                    'message' => [
-                        'content' => '  Hello World.  ',
-                    ],
-                ]],
-            ], Response::HTTP_OK),
-        ]);
+        Gemini::fake([coverLetterGeminiText('  Hello World.  ')]);
 
         $service = resolve(GenerateCoverLetterService::class);
         $result = $service->generate('My resume', 'Job desc');
@@ -28,15 +29,7 @@ describe('GenerateCoverLetterService', function (): void {
     });
 
     it('handles newlines in generated text', function (): void {
-        Http::fake([
-            '*' => Http::response([
-                'choices' => [[
-                    'message' => [
-                        'content' => "Line1\n\nLine2\r\nLine3",
-                    ],
-                ]],
-            ], Response::HTTP_OK),
-        ]);
+        Gemini::fake([coverLetterGeminiText("Line1\n\nLine2\r\nLine3")]);
 
         $service = resolve(GenerateCoverLetterService::class);
         $result = $service->generate('My resume', 'Job desc');
@@ -45,15 +38,7 @@ describe('GenerateCoverLetterService', function (): void {
     });
 
     it('handles literal backslash n sequences', function (): void {
-        Http::fake([
-            '*' => Http::response([
-                'choices' => [[
-                    'message' => [
-                        'content' => 'Hello\\n\\nWorld',
-                    ],
-                ]],
-            ], Response::HTTP_OK),
-        ]);
+        Gemini::fake([coverLetterGeminiText('Hello\\n\\nWorld')]);
 
         $service = resolve(GenerateCoverLetterService::class);
         $result = $service->generate('My resume', 'Job desc');
@@ -62,15 +47,7 @@ describe('GenerateCoverLetterService', function (): void {
     });
 
     it('collapses multiple whitespace', function (): void {
-        Http::fake([
-            '*' => Http::response([
-                'choices' => [[
-                    'message' => [
-                        'content' => 'Hello    World   Test',
-                    ],
-                ]],
-            ], Response::HTTP_OK),
-        ]);
+        Gemini::fake([coverLetterGeminiText('Hello    World   Test')]);
 
         $service = resolve(GenerateCoverLetterService::class);
         $result = $service->generate('My resume', 'Job desc');
@@ -79,15 +56,7 @@ describe('GenerateCoverLetterService', function (): void {
     });
 
     it('trims whitespace from result', function (): void {
-        Http::fake([
-            '*' => Http::response([
-                'choices' => [[
-                    'message' => [
-                        'content' => '  Trimmed text  ',
-                    ],
-                ]],
-            ], Response::HTTP_OK),
-        ]);
+        Gemini::fake([coverLetterGeminiText('  Trimmed text  ')]);
 
         $service = resolve(GenerateCoverLetterService::class);
         $result = $service->generate('My resume', 'Job desc');

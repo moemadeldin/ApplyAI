@@ -6,10 +6,15 @@ namespace Tests\Unit\Services;
 
 use App\Services\GeminiClient;
 use App\Services\OpenAiCompatibleClient;
+use App\Utilities\Constants;
 use Gemini\Exceptions\ErrorException;
+use Gemini\Exceptions\TransporterException;
 use Gemini\Laravel\Facades\Gemini;
 use Gemini\Resources\GenerativeModel;
 use Gemini\Responses\GenerativeModel\GenerateContentResponse;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Psr7\Request as Psr7Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Sleep;
@@ -78,6 +83,10 @@ function geminiLogMessages(AbstractLogger $logger, string $level): array
         ->all();
 }
 
+beforeEach(function (): void {
+    Cache::flush();
+});
+
 test('returns decoded JSON for json requests', function (): void {
     Sleep::fake();
     Gemini::fake([geminiJsonResponse()]);
@@ -132,6 +141,41 @@ test('retries transient API errors on the same model before failing over', funct
     expect($client->requestJson('system', 'prompt'))->toBe(['ok' => true]);
     Gemini::assertSent(GenerativeModel::class, 'model-a', 3);
     expect(geminiLogMessages($logger, 'warning'))->toContain('Gemini request failed with an API error.');
+});
+
+test('retries transient connection errors on the same model before failing over', function (): void {
+    Sleep::fake();
+    $logger = fakeGeminiLog();
+    Log::swap($logger);
+
+    Gemini::fake([
+        new TransporterException(new ConnectException('Connection reset', new Psr7Request('GET', 'https://example.com'))),
+        new TransporterException(new ConnectException('Connection reset', new Psr7Request('GET', 'https://example.com'))),
+        geminiJsonResponse(),
+    ]);
+
+    $client = geminiClient(['model-a', 'model-b']);
+
+    expect($client->requestJson('system', 'prompt'))->toBe(['ok' => true]);
+    expect(geminiLogMessages($logger, 'warning'))->toContain('Gemini connection error.');
+});
+
+test('throws a clear exception when connection errors exhaust all retries on every model', function (): void {
+    Sleep::fake();
+    $logger = fakeGeminiLog();
+    Log::swap($logger);
+
+    Gemini::fake([
+        new TransporterException(new ConnectException('Connection reset', new Psr7Request('GET', 'https://example.com'))),
+        new TransporterException(new ConnectException('Connection reset', new Psr7Request('GET', 'https://example.com'))),
+    ]);
+
+    $client = geminiClient(['model-a']);
+
+    expect(fn (): array => $client->requestJson('system', 'prompt'))
+        ->toThrow(RuntimeException::class, 'AI service is temporarily unavailable, please try again.');
+
+    expect(geminiLogMessages($logger, 'critical'))->toContain('All Gemini models failed.');
 });
 
 test('throws a clear exception when every model fails', function (): void {
@@ -257,4 +301,61 @@ test('throws when Gemini and the OpenRouter fallback both fail', function (): vo
 
     expect(geminiLogMessages($logger, 'critical'))
         ->toContain('Gemini models failed and the fallback provider also failed.');
+});
+
+test('skips a model while the circuit breaker is open', function (): void {
+    Sleep::fake();
+    $logger = fakeGeminiLog();
+    Log::swap($logger);
+
+    Cache::put(Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.'model-a', [
+        'failures' => Constants::AI_CIRCUIT_BREAKER_FAILURE_THRESHOLD,
+        'opened_at' => time(),
+    ], Constants::AI_CIRCUIT_BREAKER_COOLDOWN_SECONDS);
+
+    Gemini::fake([geminiJsonResponse()]);
+
+    $client = geminiClient(['model-a']);
+
+    expect(fn (): array => $client->requestJson('system', 'prompt'))
+        ->toThrow(RuntimeException::class, 'AI service is temporarily unavailable, please try again.');
+
+    Gemini::assertNotSent(GenerativeModel::class, 'model-a');
+});
+
+test('records failures toward the circuit breaker threshold', function (): void {
+    Sleep::fake();
+    $logger = fakeGeminiLog();
+    Log::swap($logger);
+
+    Gemini::fake([
+        geminiError(429, 'rate limit'),
+        geminiJsonResponse(),
+    ]);
+
+    $client = geminiClient(['model-a', 'model-b']);
+
+    expect($client->requestJson('system', 'prompt'))->toBe(['ok' => true]);
+
+    $state = Cache::get(Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.'model-a');
+
+    expect($state)->not->toBeNull()
+        ->and($state['failures'])->toBeGreaterThanOrEqual(1);
+});
+
+test('resets the circuit breaker state after a successful call', function (): void {
+    Sleep::fake();
+
+    Cache::put(Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.'model-a', [
+        'failures' => 2,
+        'opened_at' => time(),
+    ], Constants::AI_CIRCUIT_BREAKER_COOLDOWN_SECONDS);
+
+    Gemini::fake([geminiJsonResponse()]);
+
+    $client = geminiClient(['model-a']);
+
+    expect($client->requestJson('system', 'prompt'))->toBe(['ok' => true]);
+
+    expect(Cache::get(Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.'model-a'))->toBeNull();
 });

@@ -24,7 +24,7 @@ return [
 
     'models' => array_values(array_filter(array_map(
         trim(...),
-        explode(',', (string) env('DEEPSEEK_MODELS', 'deepseek-v4-flash,deepseek-v4-pro')),
+        explode(',', (string) env('DEEPSEEK_MODELS', 'deepseek-chat')),
     ), fn (string $model): bool => $model !== '')),
 
     'request_timeout' => (int) env('DEEPSEEK_REQUEST_TIMEOUT', 60),

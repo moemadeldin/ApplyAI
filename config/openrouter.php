@@ -29,7 +29,7 @@ return [
         trim(...),
         explode(',', (string) env(
             'OPENROUTER_MODELS',
-            'nvidia/nemotron-3-ultra-550b-a55b:free,cohere/north-mini-code:free,google/gemma-4-31b-it:free,qwen/qwen3-coder:free,openrouter/free'
+            'deepseek/deepseek-v4-flash-0731:free,qwen/qwen3.8-27b:free,nvidia/nemotron-3-super-120b-a12b:free'
         )),
     ), fn (string $model): bool => $model !== '')),
 

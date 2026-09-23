@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Utilities\Constants;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -15,8 +16,6 @@ use Throwable;
 
 final readonly class OpenAiCompatibleClient
 {
-    private const int MAX_ATTEMPTS_PER_MODEL = 2;
-
     /**
      * @param  array<int, string>  $models
      */
@@ -58,9 +57,17 @@ final readonly class OpenAiCompatibleClient
         return $this->send($systemPrompt, $userPrompt, jsonMode: false);
     }
 
+    /**
+     * @return array<int, string>
+     */
+    public function getModels(): array
+    {
+        return $this->models;
+    }
+
     private function send(string $systemPrompt, string $userPrompt, bool $jsonMode): string
     {
-        $generation = $this->cacheGet('ai:generation', 0);
+        $generation = $this->cacheGet(Constants::AI_CACHE_GENERATION_KEY, 0);
         $generation = is_int($generation) ? $generation : 0;
 
         $requestId = mb_substr(md5(uniqid((string) mt_rand(), true)), 0, 8);
@@ -68,7 +75,16 @@ final readonly class OpenAiCompatibleClient
         $lastException = null;
 
         foreach ($this->models as $model) {
-            $cacheKey = 'ai:'.$this->namespace.':'.$generation.':'.md5($systemPrompt.'|'.$userPrompt.'|'.$model);
+            if ($this->isCircuitOpen($model)) {
+                Log::debug($this->label.' circuit open, skipping model.', [
+                    'request_id' => $requestId,
+                    'model' => $model,
+                ]);
+
+                continue;
+            }
+
+            $cacheKey = $this->namespacePrefix().$generation.':'.md5($systemPrompt.'|'.$userPrompt.'|'.$model);
 
             $cached = $this->cacheGet($cacheKey);
 
@@ -89,11 +105,15 @@ final readonly class OpenAiCompatibleClient
             try {
                 $content = $this->attempt($model, $systemPrompt, $userPrompt, $jsonMode, $requestId);
 
+                $this->recordSuccess($model);
+
                 $this->cachePut($cacheKey, $content);
 
                 return $content;
             } catch (Throwable $e) {
                 $lastException = $e;
+
+                $this->recordFailure($model);
 
                 Log::warning($this->label.' model failed, trying the next one.', [
                     'request_id' => $requestId,
@@ -124,7 +144,7 @@ final readonly class OpenAiCompatibleClient
         bool $jsonMode,
         string $requestId
     ): string {
-        for ($attempt = 1; $attempt <= self::MAX_ATTEMPTS_PER_MODEL; $attempt++) {
+        for ($attempt = 1; $attempt <= Constants::AI_OPENROUTER_MAX_ATTEMPTS_PER_MODEL; $attempt++) {
             try {
                 $start = hrtime(true);
                 $content = $this->postToProvider($model, $systemPrompt, $userPrompt, $jsonMode);
@@ -156,7 +176,7 @@ final readonly class OpenAiCompatibleClient
                     'message' => $e->getMessage(),
                 ]);
 
-                if ($attempt < self::MAX_ATTEMPTS_PER_MODEL) {
+                if ($attempt < Constants::AI_OPENROUTER_MAX_ATTEMPTS_PER_MODEL) {
                     $this->waitBeforeConnectionRetry($attempt);
 
                     continue;
@@ -262,7 +282,7 @@ final readonly class OpenAiCompatibleClient
     private function cachePut(string $key, string $content): void
     {
         try {
-            Cache::put($key, $content, 86400 * 30);
+            Cache::put($key, $content, Constants::AI_CACHE_TTL_SECONDS);
         } catch (Throwable $throwable) {
             Log::warning('Cache write failed; proceeding without caching.', [
                 'key' => $key,
@@ -272,8 +292,95 @@ final readonly class OpenAiCompatibleClient
         }
     }
 
+    private function namespacePrefix(): string
+    {
+        return match ($this->namespace) {
+            'deepseek' => Constants::AI_CACHE_DEEPSEEK_PREFIX,
+            default => Constants::AI_CACHE_OPENROUTER_PREFIX,
+        };
+    }
+
     private function waitBeforeConnectionRetry(int $attempt): void
     {
         Sleep::sleep(min(5 * $attempt, 20));
+    }
+
+    private function isCircuitOpen(string $model): bool
+    {
+        $state = $this->circuitState($model);
+
+        if ($state === null || $state['failures'] < Constants::AI_CIRCUIT_BREAKER_FAILURE_THRESHOLD) {
+            return false;
+        }
+
+        if (time() - $state['opened_at'] >= Constants::AI_CIRCUIT_BREAKER_COOLDOWN_SECONDS) {
+            $this->resetCircuit($model);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function recordFailure(string $model): void
+    {
+        $state = $this->circuitState($model);
+        $failures = ($state['failures'] ?? 0) + 1;
+
+        try {
+            Cache::put(
+                Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.$model,
+                ['failures' => $failures, 'opened_at' => time()],
+                Constants::AI_CIRCUIT_BREAKER_COOLDOWN_SECONDS
+            );
+        } catch (Throwable $throwable) {
+            Log::warning('Circuit breaker write failed.', [
+                'model' => $model,
+                'exception' => $throwable::class,
+                'message' => $throwable->getMessage(),
+            ]);
+        }
+    }
+
+    private function recordSuccess(string $model): void
+    {
+        $this->resetCircuit($model);
+    }
+
+    private function resetCircuit(string $model): void
+    {
+        try {
+            Cache::forget(Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.$model);
+        } catch (Throwable $throwable) {
+            Log::warning('Circuit breaker reset failed.', [
+                'model' => $model,
+                'exception' => $throwable::class,
+                'message' => $throwable->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @return array{failures: int, opened_at: int}|null
+     */
+    private function circuitState(string $model): ?array
+    {
+        $state = $this->cacheGet(Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.$model);
+
+        if (! is_array($state)) {
+            return null;
+        }
+
+        $failures = $state['failures'] ?? null;
+        $openedAt = $state['opened_at'] ?? null;
+
+        if (! is_int($failures) || ! is_int($openedAt)) {
+            return null;
+        }
+
+        return [
+            'failures' => $failures,
+            'opened_at' => $openedAt,
+        ];
     }
 }

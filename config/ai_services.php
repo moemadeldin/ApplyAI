@@ -17,10 +17,7 @@ return [
 
     'models' => array_values(array_filter(array_map(
         trim(...),
-        explode(',', (string) env(
-            'GEMINI_MODELS',
-            // 'gemini-3.6-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash,gemini-2.5-flash-lite'
-        )),
+        explode(',', (string) env('GEMINI_MODELS', 'gemini-3.6-flash,gemini-3.6-flash-lite')),
     ), fn (string $model): bool => $model !== '')),
 
     'temperature' => (float) env('AI_TEMPERATURE', 0.3),

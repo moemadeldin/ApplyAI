@@ -5,10 +5,76 @@ declare(strict_types=1);
 use App\Http\Resources\CustomJobVacancyWithResultsResource;
 use App\Models\CustomJobVacancy;
 use App\Models\User;
+use Gemini\Laravel\Facades\Gemini;
+use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
+
+function vacancyControllerParseJson(): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => json_encode([
+                'title' => 'Laravel Developer',
+                'company' => 'Tech Corp',
+                'skills_required' => 'Laravel, PHP',
+                'responsibilities' => 'Build APIs',
+                'requirements' => '3+ years experience',
+                'experience_years_min' => 3,
+                'experience_years_max' => 5,
+                'nice_to_have' => 'React knowledge',
+                'location' => 'Remote',
+            ], JSON_THROW_ON_ERROR)]]],
+        ]],
+    ]);
+}
+
+function vacancyControllerEvaluateJson(): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => json_encode([
+                'score' => 85,
+                'feedback' => ['strengths' => ['Laravel'], 'weaknesses' => []],
+                'suggestions' => 'Keep it up',
+            ], JSON_THROW_ON_ERROR)]]],
+        ]],
+    ]);
+}
+
+function vacancyControllerText(string $text): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => $text]]],
+        ]],
+    ]);
+}
+
+function vacancyControllerQaJson(): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => json_encode([
+                'qa' => [
+                    ['question' => 'What is Laravel?', 'answer' => 'A PHP framework.'],
+                    ['question' => 'Tell us about your experience.', 'answer' => '5 years.'],
+                ],
+            ], JSON_THROW_ON_ERROR)]]],
+        ]],
+    ]);
+}
+
+function vacancyControllerEmptyParseJson(): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => '[]']]],
+        ]],
+    ]);
+}
 
 beforeEach(function (): void {
     Http::fake([
@@ -16,23 +82,6 @@ beforeEach(function (): void {
             '# Laravel Developer at Tech Corp'.PHP_EOL.'We need a Laravel developer with 3+ years experience.',
             Response::HTTP_OK
         ),
-        '*' => Http::response([
-            'choices' => [[
-                'message' => [
-                    'content' => json_encode([
-                        'title' => 'Laravel Developer',
-                        'company' => 'Tech Corp',
-                        'skills_required' => 'Laravel, PHP',
-                        'responsibilities' => 'Build APIs',
-                        'requirements' => '3+ years experience',
-                        'experience_years_min' => 3,
-                        'experience_years_max' => 5,
-                        'nice_to_have' => 'React knowledge',
-                        'location' => 'Remote',
-                    ]),
-                ],
-            ]],
-        ], Response::HTTP_OK),
     ]);
 });
 
@@ -58,6 +107,14 @@ describe('CustomJobVacancyController', function (): void {
 
         Sanctum::actingAs($user);
 
+        Gemini::fake([
+            vacancyControllerParseJson(),
+            vacancyControllerEvaluateJson(),
+            vacancyControllerText('Optimized resume content'),
+            vacancyControllerQaJson(),
+            vacancyControllerText('Generated cover letter text'),
+        ]);
+
         $response = $this->postJson(route('custom-vacancies.store'), [
             'job_text' => 'Looking for a Laravel developer with 5 years experience.',
         ]);
@@ -75,6 +132,14 @@ describe('CustomJobVacancyController', function (): void {
         ]);
 
         Sanctum::actingAs($user);
+
+        Gemini::fake([
+            vacancyControllerParseJson(),
+            vacancyControllerEvaluateJson(),
+            vacancyControllerText('Optimized resume content'),
+            vacancyControllerQaJson(),
+            vacancyControllerText('Generated cover letter text'),
+        ]);
 
         $response = $this->postJson(route('custom-vacancies.store'), [
             'job_url' => 'https://example.com/jobs/123',
@@ -103,6 +168,8 @@ describe('CustomJobVacancyController', function (): void {
 
         Sanctum::actingAs($user);
 
+        Gemini::fake([vacancyControllerParseJson()]);
+
         $response = $this->postJson(route('custom-vacancies.preview'), [
             'job_url' => 'https://example.com/jobs/123',
         ]);
@@ -116,6 +183,8 @@ describe('CustomJobVacancyController', function (): void {
         $user = User::factory()->create();
 
         Sanctum::actingAs($user);
+
+        Gemini::fake([vacancyControllerParseJson()]);
 
         $response = $this->postJson(route('custom-vacancies.preview'), [
             'job_url' => 'https://wuzzuf.net/jobs/p/abc-full-stack-developer?o=1&l=sp&t=sj&a=laravel|search-v3|hpb',
@@ -134,6 +203,14 @@ describe('CustomJobVacancyController', function (): void {
         ]);
 
         Sanctum::actingAs($user);
+
+        Gemini::fake([
+            vacancyControllerParseJson(),
+            vacancyControllerEvaluateJson(),
+            vacancyControllerText('Optimized resume content'),
+            vacancyControllerQaJson(),
+            vacancyControllerText('Generated cover letter text'),
+        ]);
 
         $response = $this->postJson(route('custom-vacancies.store'), [
             'job_url' => 'https://wuzzuf.net/jobs/p/abc-full-stack-developer?o=1&l=sp&t=sj&a=laravel|search-v3|hpb',
@@ -182,12 +259,9 @@ describe('CustomJobVacancyController', function (): void {
                 '# Not a job page'.PHP_EOL.'This page has some content but no job details.',
                 Response::HTTP_OK
             ),
-            '*' => Http::response([
-                'choices' => [[
-                    'message' => ['content' => json_encode([])],
-                ]],
-            ], Response::HTTP_OK),
         ]);
+
+        Gemini::fake([vacancyControllerEmptyParseJson()]);
 
         $user = User::factory()->create();
         Sanctum::actingAs($user);
@@ -235,12 +309,9 @@ describe('CustomJobVacancyController', function (): void {
                 '# Not a job page'.PHP_EOL.'This page has some content but no job details.',
                 Response::HTTP_OK
             ),
-            '*' => Http::response([
-                'choices' => [[
-                    'message' => ['content' => json_encode([])],
-                ]],
-            ], Response::HTTP_OK),
         ]);
+
+        Gemini::fake([vacancyControllerEmptyParseJson()]);
 
         $user = User::factory()->create();
         $user->resume()->create([

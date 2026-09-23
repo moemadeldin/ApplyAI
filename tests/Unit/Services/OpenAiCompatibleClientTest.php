@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Services\OpenAiCompatibleClient;
+use App\Utilities\Constants;
 use GuzzleHttp\Exception\ConnectException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Sleep;
@@ -59,6 +61,10 @@ function openRouterLogMessages(AbstractLogger $logger, string $level): array
         ->all();
 }
 
+beforeEach(function (): void {
+    Cache::flush();
+});
+
 test('returns decoded JSON for json requests', function (): void {
     Sleep::fake();
     Http::fake([
@@ -91,10 +97,10 @@ test('sends the expected OpenAI-compatible payload', function (): void {
 
     $client->requestJson('system prompt', 'user prompt');
 
-    Http::assertSent(function (array $request): bool {
+    Http::assertSent(function ($request): bool {
         $body = $request->data();
 
-        return $request['model'] === 'nvidia/nemotron-3-ultra-550b-a55b:free'
+        return $body['model'] === 'nvidia/nemotron-3-ultra-550b-a55b:free'
             && $body['messages'][0] === ['role' => 'system', 'content' => 'system prompt']
             && $body['messages'][1] === ['role' => 'user', 'content' => 'user prompt']
             && $body['response_format'] === ['type' => 'json_object']
@@ -217,4 +223,66 @@ test('throws a clear exception when the response is not valid JSON', function ()
 
     expect(fn (): array => $client->requestJson('system', 'prompt'))
         ->toThrow(RuntimeException::class, 'Provider returned malformed JSON.');
+});
+
+test('skips a model while the circuit breaker is open', function (): void {
+    Sleep::fake();
+    $logger = fakeOpenRouterLog();
+    Log::swap($logger);
+
+    Cache::put(Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.'model-a', [
+        'failures' => Constants::AI_CIRCUIT_BREAKER_FAILURE_THRESHOLD,
+        'opened_at' => time(),
+    ], Constants::AI_CIRCUIT_BREAKER_COOLDOWN_SECONDS);
+
+    Http::fake([
+        'openrouter.ai/*' => Http::response(openRouterHttpResponse(json_encode(['ok' => true]))),
+    ]);
+
+    $client = openRouterClient(['model-a']);
+
+    expect(fn (): array => $client->requestJson('system', 'prompt'))
+        ->toThrow(RuntimeException::class, 'AI service is temporarily unavailable, please try again.');
+
+    Http::assertNothingSent();
+});
+
+test('records failures toward the circuit breaker threshold', function (): void {
+    Sleep::fake();
+    $logger = fakeOpenRouterLog();
+    Log::swap($logger);
+
+    Http::fake([
+        'openrouter.ai/*' => Http::sequence()
+            ->push(['error' => ['message' => 'rate limit']], 429)
+            ->push(openRouterHttpResponse(json_encode(['ok' => true]))),
+    ]);
+
+    $client = openRouterClient(['model-a', 'model-b']);
+
+    expect($client->requestJson('system', 'prompt'))->toBe(['ok' => true]);
+
+    $state = Cache::get(Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.'model-a');
+
+    expect($state)->not->toBeNull()
+        ->and($state['failures'])->toBeGreaterThanOrEqual(1);
+});
+
+test('resets the circuit breaker state after a successful call', function (): void {
+    Sleep::fake();
+
+    Cache::put(Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.'model-a', [
+        'failures' => 2,
+        'opened_at' => time(),
+    ], Constants::AI_CIRCUIT_BREAKER_COOLDOWN_SECONDS);
+
+    Http::fake([
+        'openrouter.ai/*' => Http::response(openRouterHttpResponse(json_encode(['ok' => true]))),
+    ]);
+
+    $client = openRouterClient(['model-a']);
+
+    expect($client->requestJson('system', 'prompt'))->toBe(['ok' => true]);
+
+    expect(Cache::get(Constants::AI_CIRCUIT_BREAKER_CACHE_PREFIX.'model-a'))->toBeNull();
 });

@@ -7,27 +7,28 @@ use App\Models\CustomJobApplication;
 use App\Models\CustomJobVacancy;
 use App\Models\Resume;
 use App\Models\User;
+use Gemini\Laravel\Facades\Gemini;
+use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function (): void {
-    Http::fake([
-        '*' => Http::response([
-            'choices' => [[
-                'message' => [
-                    'content' => json_encode([
-                        'score' => 85,
-                        'feedback' => ['strengths' => ['PHP'], 'weaknesses' => []],
-                        'suggestions' => 'Keep going',
-                    ]),
-                ],
-            ]],
-        ], Response::HTTP_OK),
+function createApplicationGeminiJson(array $data): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => json_encode($data, JSON_THROW_ON_ERROR)]]],
+        ]],
     ]);
+}
+
+beforeEach(function (): void {
+    Gemini::fake([createApplicationGeminiJson([
+        'score' => 85,
+        'feedback' => ['strengths' => ['PHP'], 'weaknesses' => []],
+        'suggestions' => 'Keep going',
+    ])]);
 });
 
 test('creates application successfully', function (): void {
