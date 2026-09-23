@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ProcessingStatus;
 use Database\Factories\CustomJobApplicationFactory;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,6 +19,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $id
  * @property string $user_id
  * @property string $custom_job_vacancy_id
+ * @property ProcessingStatus $status
+ * @property string|null $current_step
+ * @property string|null $error_message
  * @property int|null $compatibility_score
  * @property array{strengths: list<string>, weaknesses: list<string>}|null $feedback
  * @property list<string>|null $improvement_suggestions
@@ -77,6 +81,9 @@ final class CustomJobApplication extends Model
         return [
             'user_id' => 'string',
             'custom_job_vacancy_id' => 'string',
+            'status' => ProcessingStatus::class,
+            'current_step' => 'string',
+            'error_message' => 'string',
             'compatibility_score' => 'integer',
             'feedback' => 'array',
             'improvement_suggestions' => 'array',

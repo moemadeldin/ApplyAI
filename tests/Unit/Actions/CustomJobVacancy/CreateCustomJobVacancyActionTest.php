@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use App\Actions\CustomJobVacancy\CreateCustomJobVacancyAction;
+use App\Enums\ProcessingStatus;
+use App\Models\CustomJobApplication;
+use App\Models\CustomJobVacancy;
 use App\Models\Resume;
 use App\Models\User;
 use Gemini\Laravel\Facades\Gemini;
@@ -69,6 +72,20 @@ function actionQaPayload(): array
     ];
 }
 
+function actionPendingVacancy(User $user): CustomJobVacancy
+{
+    $vacancy = CustomJobVacancy::factory()->for($user)->create([
+        'status' => ProcessingStatus::PENDING->value,
+    ]);
+
+    CustomJobApplication::factory()->for($user)->create([
+        'custom_job_vacancy_id' => $vacancy->id,
+        'status' => ProcessingStatus::PENDING->value,
+    ]);
+
+    return $vacancy->refresh();
+}
+
 beforeEach(function (): void {
     Cache::flush();
     Sleep::fake();
@@ -85,8 +102,10 @@ test('creates vacancy with high score - generates all content', function (): voi
         actionTextResponse('Cover letter content'),
     ]);
 
+    $vacancy = actionPendingVacancy($this->user);
+
     $action = resolve(CreateCustomJobVacancyAction::class);
-    $result = $action->handle('Job description text', $this->user);
+    $result = $action->handle($vacancy, $this->user);
 
     expect($result)
         ->toHaveKey('vacancy')
@@ -107,8 +126,10 @@ test('creates vacancy with low score - no optimized resume or mock interview', f
         actionJsonResponse(actionQaPayload()),
     ]);
 
+    $vacancy = actionPendingVacancy($this->user);
+
     $action = resolve(CreateCustomJobVacancyAction::class);
-    $result = $action->handle('Job description text', $this->user);
+    $result = $action->handle($vacancy, $this->user);
 
     expect($result)
         ->toHaveKey('vacancy')
@@ -122,7 +143,8 @@ test('creates vacancy with low score - no optimized resume or mock interview', f
 
 test('aborts when user has no resume', function (): void {
     $userWithoutResume = User::factory()->create();
+    $vacancy = actionPendingVacancy($userWithoutResume);
 
     $action = resolve(CreateCustomJobVacancyAction::class);
-    $action->handle('Job text', $userWithoutResume);
+    $action->handle($vacancy, $userWithoutResume);
 })->throws(HttpException::class);

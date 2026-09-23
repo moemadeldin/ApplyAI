@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\CustomJobVacancy;
 
+use App\Enums\EmploymentType;
 use App\Enums\MockInterviewStatus;
 use App\Models\CustomJobApplication;
 use App\Models\CustomJobVacancy;
@@ -33,11 +34,15 @@ final readonly class CreateCustomJobVacancyAction
     ) {}
 
     /**
+     * Run the AI pipeline for a vacancy that was already created with a
+     * pending status. All writes are applied inside a single transaction so
+     * the vacancy, application and mock interview succeed or fail together.
+     *
      * @return array{vacancy: CustomJobVacancy, application: CustomJobApplication, mock_interview: ?MockInterview}
      */
-    public function handle(string $jobText, User $user, ?string $jobUrl = null): array
+    public function handle(CustomJobVacancy $vacancy, User $user): array
     {
-        return DB::transaction(function () use ($jobText, $user, $jobUrl): array {
+        return DB::transaction(function () use ($vacancy, $user): array {
 
             $user->loadMissing('resume');
 
@@ -48,6 +53,7 @@ final readonly class CreateCustomJobVacancyAction
             );
 
             $resumeText = $user->resume->extracted_text;
+            $jobText = (string) $vacancy->job_text;
 
             [$parsed, $evaluation] = Concurrency::run([
                 fn (): array => $this->parseService->parse($jobText),
@@ -65,7 +71,7 @@ final readonly class CreateCustomJobVacancyAction
             $optimizedResume = $this->normalizeResume($optimizedResume);
             $qaList = $this->normalizeQaList($qaList);
 
-            $vacancy = $this->createVacancy($user, $parsed, $jobText, $jobUrl);
+            $vacancy = $this->updateVacancy($vacancy, $parsed);
 
             $score = (int) ($evaluation['score'] ?? 0);
 
@@ -77,8 +83,7 @@ final readonly class CreateCustomJobVacancyAction
                 $qaList = [];
             }
 
-            $application = $this->createApplication(
-                $user,
+            $application = $this->updateApplication(
                 $vacancy,
                 $evaluation,
                 $score,
@@ -187,14 +192,14 @@ final readonly class CreateCustomJobVacancyAction
     /**
      * @param  array<string, int|string|null>  $parsed
      */
-    private function createVacancy(User $user, array $parsed, ?string $jobText = null, ?string $jobUrl = null): CustomJobVacancy
+    private function updateVacancy(CustomJobVacancy $vacancy, array $parsed): CustomJobVacancy
     {
-        return CustomJobVacancy::query()->create([
+        $vacancy->update([
             'title' => $parsed['title'],
             'company' => $parsed['company'],
             'description' => $parsed['description'],
             'location' => $parsed['location'],
-            'employment_type' => $parsed['employment_type'] ?? 'full-time',
+            'employment_type' => $parsed['employment_type'] ?? EmploymentType::FULL_TIME->value,
             'responsibilities' => $parsed['responsibilities'],
             'requirements' => $parsed['requirements'],
             'skills_required' => $parsed['skills_required'],
@@ -202,32 +207,33 @@ final readonly class CreateCustomJobVacancyAction
             'experience_years_max' => $parsed['experience_years_max'],
             'expected_salary' => $parsed['expected_salary'],
             'category' => $parsed['category'],
-            'job_text' => $jobText,
-            'job_url' => $jobUrl,
-            'user_id' => $user->id,
         ]);
+
+        return $vacancy->refresh();
     }
 
     /**
      * @param  array{score: int, feedback: array{strengths: list<string>, weaknesses: list<string>}, suggestions: string}  $evaluation
      */
-    private function createApplication(
-        User $user,
+    private function updateApplication(
         CustomJobVacancy $vacancy,
         array $evaluation,
         int $score,
         ?string $optimizedResume,
         ?string $coverLetter
     ): CustomJobApplication {
-        return CustomJobApplication::query()->create([
-            'user_id' => $user->id,
-            'custom_job_vacancy_id' => $vacancy->id,
+        /** @var CustomJobApplication $application */
+        $application = $vacancy->customJobApplications()->firstOrFail();
+
+        $application->update([
             'compatibility_score' => $score,
             'feedback' => $evaluation['feedback'],
             'improvement_suggestions' => $evaluation['suggestions'],
             'optimized_resume' => $optimizedResume,
             'cover_letter' => $coverLetter,
         ]);
+
+        return $application->refresh();
     }
 
     /**
@@ -238,6 +244,10 @@ final readonly class CreateCustomJobVacancyAction
         CustomJobApplication $application,
         array $qaList
     ): ?MockInterview {
+        MockInterview::query()
+            ->where('application_id', $application->id)
+            ->delete();
+
         if ($score < Constants::MINIMUM_SCORE) {
             MockInterview::query()->create([
                 'application_id' => $application->id,

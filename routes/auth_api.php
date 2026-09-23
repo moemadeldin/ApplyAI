@@ -8,6 +8,7 @@ use App\Http\Controllers\API\V1\CoverLetterController;
 use App\Http\Controllers\API\V1\CustomApplicationController;
 use App\Http\Controllers\API\V1\CustomJobVacancyController;
 use App\Http\Controllers\API\V1\CustomMockInterviewController;
+use App\Http\Controllers\API\V1\DashboardController;
 use App\Http\Controllers\API\V1\JobUrlPreviewController;
 use App\Http\Controllers\API\V1\ProfileController;
 use App\Http\Controllers\API\V1\ProfilePasswordController;
@@ -54,6 +55,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('custom-vacancies/{customJobVacancy}', 'show')
             ->name('custom-vacancies.show');
 
+        Route::get('custom-vacancies/{customJobVacancy}/status', 'status')
+            ->name('custom-vacancies.status');
+
         Route::delete('custom-vacancies/{customJobVacancy}', 'destroy')
             ->name('custom-vacancies.destroy');
     });
@@ -78,4 +82,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('custom-vacancies/{customJobVacancy}/cover-letter', CoverLetterController::class)
         ->name('cover-letter.generate');
+
+    Route::get('dashboard/stats', DashboardController::class)
+        ->name('dashboard.stats');
 });

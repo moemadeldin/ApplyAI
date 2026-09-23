@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\EmploymentType;
+use App\Enums\ProcessingStatus;
 use Database\Factories\CustomJobVacancyFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,6 +24,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property string|null $job_text
  * @property string|null $job_url
+ * @property ProcessingStatus $status
+ * @property string|null $current_step
+ * @property string|null $error_message
  * @property string|null $responsibilities
  * @property string|null $requirements
  * @property string|null $skills_required
@@ -71,6 +75,9 @@ final class CustomJobVacancy extends Model
             'description' => 'string',
             'job_text' => 'string',
             'job_url' => 'string',
+            'status' => ProcessingStatus::class,
+            'current_step' => 'string',
+            'error_message' => 'string',
             'location' => 'string',
             'expected_salary' => 'string',
             'employment_type' => EmploymentType::class,
