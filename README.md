@@ -10,7 +10,7 @@
 
 ## Features
 
-- **AI Resume Evaluation** - Analyze resume-to-job compatibility using Groq Llama models
+- **AI Resume Evaluation** - Analyze resume-to-job compatibility using Google Gemini models
 - **AI Cover Letter Generator** - Generate tailored cover letters
 - **AI Mock Interview Generator** - Create practice Q&A pairs
 - **PDF Text Extraction** - Parse resumes from PDF files
@@ -29,7 +29,7 @@
 - Redis 7 (queue + cache)
 - Nginx
 - Laravel Sanctum
-- Groq API (Llama 3.3)
+- Google Gemini API
 - Pest PHP
 - Docker
 
@@ -83,7 +83,15 @@ REDIS_HOST=127.0.0.1
 CACHE_STORE=redis
 QUEUE_CONNECTION=redis
 
-GROQ_API_KEY=your_groq_api_key
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODELS=gemini-3.6-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite
+
+# Optional OpenRouter fallback (used when all Gemini models fail, e.g. free-tier limits)
+# Free tier: 20 req/min and 50 req/day (1,000/day after a one-time $10 credit purchase).
+# Free model IDs rotate, so review https://openrouter.ai/models and update OPENROUTER_MODELS as needed.
+OPENROUTER_ENABLED=false
+OPENROUTER_API_KEY=your_openrouter_api_key
+OPENROUTER_MODELS=nvidia/nemotron-3-ultra-550b-a55b:free,cohere/north-mini-code:free,google/gemma-4-31b-it:free,qwen/qwen3-coder:free,openrouter/free
 ```
 
 ## API Endpoints

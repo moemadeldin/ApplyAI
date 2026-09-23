@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\API\V1\AiHealthController;
 use App\Http\Controllers\API\V1\Auth\PasswordResetController;
 use App\Http\Controllers\API\V1\Auth\RegisterController;
 use App\Http\Controllers\API\V1\Auth\SessionController;
 use App\Http\Controllers\API\V1\Auth\SocialiteController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/health/ai', AiHealthController::class)
+    ->name('health.ai');
 
 Route::middleware(['guest', 'throttle:5,1'])->group(function (): void {
     Route::post('/register', RegisterController::class)

@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Traits\HasAiPrompt;
+use App\Utilities\Constants;
+use RuntimeException;
 
 final readonly class ParseJobVacancyService
 {
     use HasAiPrompt;
 
-    private const string SYSTEM_PROMPT = 'You are a job vacancy parser.';
-
-    public function __construct(private GroqClient $client) {}
+    public function __construct(private GeminiClient $client) {}
 
     /**
      * @return array<string, int|string|null>
@@ -22,9 +22,9 @@ final readonly class ParseJobVacancyService
         $prompt = $this->getPrompt($jobText, 'prompts.parse_job_vacancy');
 
         /** @var array<mixed, mixed> $data */
-        $data = $this->client->requestJson(self::SYSTEM_PROMPT, $prompt);
+        $data = $this->client->requestJson(Constants::SYSTEM_PROMPT_PARSE_JOB_VACANCY, $prompt);
 
-        return [
+        $result = [
             'title' => $this->stringOrNull($data, 'title'),
             'company' => $this->stringOrNull($data, 'company'),
             'description' => $this->stringOrNull($data, 'description'),
@@ -38,6 +38,14 @@ final readonly class ParseJobVacancyService
             'expected_salary' => $this->normalizeSalary($this->stringOrNull($data, 'expected_salary')),
             'category' => $this->stringOrNull($data, 'category'),
         ];
+
+        throw_if(
+            array_filter($result, fn (int|string|null $value): bool => $value !== null) === [],
+            RuntimeException::class,
+            "Couldn't extract job details from this page."
+        );
+
+        return $result;
     }
 
     private function getPrompt(string $jobText, string $configKey): string

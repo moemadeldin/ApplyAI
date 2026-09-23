@@ -9,27 +9,28 @@ use App\Models\CustomJobVacancy;
 use App\Models\MockInterview;
 use App\Models\Resume;
 use App\Models\User;
+use Gemini\Laravel\Facades\Gemini;
+use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function (): void {
-    Http::fake([
-        '*' => Http::response([
-            'choices' => [[
-                'message' => [
-                    'content' => json_encode([
-                        'qa' => [
-                            ['question' => 'Q1?', 'answer' => 'A1'],
-                            ['question' => 'Q2?', 'answer' => 'A2'],
-                        ],
-                    ]),
-                ],
-            ]],
-        ], Response::HTTP_OK),
+function customMockGeminiJson(array $data): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => json_encode($data, JSON_THROW_ON_ERROR)]]],
+        ]],
     ]);
+}
+
+beforeEach(function (): void {
+    Gemini::fake([customMockGeminiJson([
+        'qa' => [
+            ['question' => 'Q1?', 'answer' => 'A1'],
+            ['question' => 'Q2?', 'answer' => 'A2'],
+        ],
+    ])]);
 });
 
 test('qualifies and stores questions successfully', function (): void {

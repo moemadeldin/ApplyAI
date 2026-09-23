@@ -53,7 +53,7 @@ final readonly class CreateResumeAction
                 ]);
         });
 
-        Cache::increment('ai:generation');
+        Cache::increment(Constants::AI_CACHE_GENERATION_KEY);
         Cache::forget('user:has_resume:'.$user->id);
         Cache::forget('user:profile:'.$user->id);
 

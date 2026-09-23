@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Traits\HasAiPrompt;
+use App\Utilities\Constants;
 
 final readonly class EvaluateResumeWithAIService
 {
     use HasAiPrompt;
 
-    private const string SYSTEM_PROMPT = 'You are a structured evaluator. Always return only valid JSON.';
-
-    public function __construct(private GroqClient $client) {}
+    public function __construct(private GeminiClient $client) {}
 
     /**
      * @return array{score: int, feedback: array{strengths: list<string>, weaknesses: list<string>}, suggestions: string}
@@ -22,7 +21,7 @@ final readonly class EvaluateResumeWithAIService
         $prompt = $this->getPrompt($resumeText, $jobDescription, 'prompts.evaluation');
 
         /** @var array<mixed, mixed> $data */
-        $data = $this->client->requestJson(self::SYSTEM_PROMPT, $prompt);
+        $data = $this->client->requestJson(Constants::SYSTEM_PROMPT_EVALUATION, $prompt);
 
         /** @var array{strengths: list<string>, weaknesses: list<string>} $feedback */
         $feedback = $data['feedback'] ?? ['strengths' => [], 'weaknesses' => []];

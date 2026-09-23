@@ -5,20 +5,21 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Services\OptimizeResumeService;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Http;
+use Gemini\Laravel\Facades\Gemini;
+use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use ReflectionMethod;
 
-test('optimize returns result', function (): void {
-    Http::fake([
-        '*' => Http::response([
-            'choices' => [[
-                'message' => [
-                    'content' => 'Optimized resume content',
-                ],
-            ]],
-        ], Response::HTTP_OK),
+function optimizeResumeGeminiText(string $text): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => $text]]],
+        ]],
     ]);
+}
+
+test('optimize returns result', function (): void {
+    Gemini::fake([optimizeResumeGeminiText('Optimized resume content')]);
 
     $service = resolve(OptimizeResumeService::class);
     $result = $service->optimize('My resume', 'Job desc');

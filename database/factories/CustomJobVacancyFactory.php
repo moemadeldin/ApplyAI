@@ -33,6 +33,7 @@ final class CustomJobVacancyFactory extends Factory
             'title' => $this->faker->jobTitle(),
             'description' => $this->faker->text(200),
             'job_text' => $this->faker->text(200),
+            'job_url' => $this->faker->url(),
             'location' => $this->faker->city(),
             'expected_salary' => $this->faker->numberBetween(30000, 120000),
             'employment_type' => EmploymentType::FULL_TIME->value,

@@ -5,20 +5,19 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Traits\HasAiPrompt;
+use App\Utilities\Constants;
 
 final readonly class GenerateCoverLetterService
 {
     use HasAiPrompt;
 
-    private const string SYSTEM_PROMPT = 'You are a professional cover letter writer.';
-
-    public function __construct(private GroqClient $client) {}
+    public function __construct(private GeminiClient $client) {}
 
     public function generate(string $resumeText, string $jobDescription): string
     {
         $prompt = $this->getPrompt($resumeText, $jobDescription, 'prompts.cover_letter');
 
-        $text = $this->client->requestText(self::SYSTEM_PROMPT, $prompt);
+        $text = $this->client->requestText(Constants::SYSTEM_PROMPT_COVER_LETTER, $prompt);
 
         return $this->sanitizeText($text);
     }

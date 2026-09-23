@@ -60,3 +60,20 @@ test('json structure constant', function (): void {
         'mock_interview',
     ]);
 });
+
+test('vacancy resource exposes the job url', function (): void {
+    $vacancy = CustomJobVacancy::factory()->create([
+        'job_url' => 'https://boards.greenhouse.io/acme/jobs/123',
+    ]);
+
+    $resource = new CustomJobVacancyWithResultsResource([
+        'vacancy' => $vacancy,
+        'application' => CustomJobApplication::factory()->create([
+            'custom_job_vacancy_id' => $vacancy->id,
+        ]),
+        'mock_interview' => null,
+    ]);
+    $data = $resource->toArray(request());
+
+    expect($data['vacancy']['job_url'])->toBe('https://boards.greenhouse.io/acme/jobs/123');
+});

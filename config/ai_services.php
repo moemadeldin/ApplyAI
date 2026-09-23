@@ -13,7 +13,12 @@ return [
     | selection and response creativity level (temperature).
     */
 
-    'model' => env('AI_MODEL', 'llama-3.3-70b-versatile'),
+    'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
+
+    'models' => array_values(array_filter(array_map(
+        trim(...),
+        explode(',', (string) env('GEMINI_MODELS', 'gemini-3.6-flash,gemini-3.6-flash-lite')),
+    ), fn (string $model): bool => $model !== '')),
 
     'temperature' => (float) env('AI_TEMPERATURE', 0.3),
 

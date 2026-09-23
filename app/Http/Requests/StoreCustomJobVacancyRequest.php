@@ -14,7 +14,8 @@ final class StoreCustomJobVacancyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'job_text' => ['required', 'string'],
+            'job_url' => ['nullable', 'regex:/^https?:\/\/[^\s]+$/i', 'max:2048', 'required_without:job_text'],
+            'job_text' => ['nullable', 'string', 'required_without:job_url'],
         ];
     }
 }

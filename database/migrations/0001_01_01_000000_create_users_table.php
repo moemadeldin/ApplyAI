@@ -16,7 +16,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table): void {
             $table->uuid('id')->primary();
-            $table->string('email')->unique()->nullable();
+            $table->string('email')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
             $table->string('status')->index()->default(value: Status::ACTIVE->value);
@@ -24,10 +24,20 @@ return new class extends Migration
             $table->timestamp('verification_code_expire_at')->index()->nullable();
             $table->string('provider')->nullable();
             $table->string('provider_id')->nullable();
-            $table->unique(['provider', 'provider_id']);
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
+            $table->string('email_unique')
+                ->storedAs('CASE WHEN deleted_at IS NULL THEN email ELSE NULL END')
+                ->nullable();
+            $table->unique('email_unique');
+            $table->string('provider_unique')
+                ->storedAs('CASE WHEN deleted_at IS NULL THEN provider ELSE NULL END')
+                ->nullable();
+            $table->string('provider_id_unique')
+                ->storedAs('CASE WHEN deleted_at IS NULL THEN provider_id ELSE NULL END')
+                ->nullable();
+            $table->unique(['provider_unique', 'provider_id_unique']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table): void {

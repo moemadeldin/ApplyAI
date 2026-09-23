@@ -5,20 +5,24 @@ declare(strict_types=1);
 use App\Models\CustomJobVacancy;
 use App\Models\Resume;
 use App\Models\User;
+use Gemini\Laravel\Facades\Gemini;
+use Gemini\Responses\GenerativeModel\GenerateContentResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function (): void {
-    Http::fake([
-        '*' => Http::response([
-            'choices' => [[
-                'message' => ['content' => 'Generated cover letter text'],
-            ]],
-        ], Response::HTTP_OK),
+function coverLetterControllerGeminiText(string $text): GenerateContentResponse
+{
+    return GenerateContentResponse::fake([
+        'candidates' => [[
+            'content' => ['parts' => [['text' => $text]]],
+        ]],
     ]);
+}
+
+beforeEach(function (): void {
+    Gemini::fake([coverLetterControllerGeminiText('Generated cover letter text')]);
 });
 
 test('generates cover letter for authenticated user with resume', function (): void {
